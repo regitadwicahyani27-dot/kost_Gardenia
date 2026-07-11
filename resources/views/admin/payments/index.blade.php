@@ -3,7 +3,7 @@
 @section('title', 'Verifikasi Pembayaran - Admin Kos Putri Gardenia')
 
 @section('content')
-<div>
+<div x-data="paymentActions">
     <h1 class="font-display text-2xl font-bold text-gray-900 mb-6">Verifikasi Pembayaran</h1>
 
     {{-- Filter Tabs --}}
@@ -60,36 +60,43 @@
                         · {{ $typeLabels[$payment->payment_type] ?? $payment->payment_type }}
                     </p>
                     <p class="text-xs text-gray-400">{{ $payment->created_at->translatedFormat('d F Y H:i') }}</p>
+                    @if($payment->notes)
+                    <p class="text-xs text-gray-500 mt-1 italic">"{{ $payment->notes }}"</p>
+                    @endif
                 </div>
 
                 {{-- Amount + Actions --}}
                 <div class="text-right flex-shrink-0">
                     <p class="text-lg font-bold text-[#2F4538] mb-2">Rp {{ number_format($payment->amount, 0, ',', '.') }}</p>
+
                     @if($payment->status === 'pending')
                     <div class="flex gap-2">
-                        <form action="{{ route('admin.payment.verify', $payment) }}" method="POST">
+                        {{-- Setujui --}}
+                        <form action="{{ route('admin.payment.verify', $payment) }}" method="POST" onsubmit="return confirm('Setujui pembayaran ini? Booking akan dikonfirmasi.')">
                             @csrf
                             @method('PATCH')
                             <button class="flex items-center gap-1.5 text-xs font-semibold text-white bg-green-500 px-3 py-1.5 rounded-full hover:bg-green-600 transition">
-                                <span class="w-3.5 h-3.5">{!! \App\Support\Icons::get('check') !!}</span> Verifikasi
+                                <span class="w-3.5 h-3.5">{!! \App\Support\Icons::get('check') !!}</span> Setujui
                             </button>
                         </form>
-                        <form action="{{ route('admin.payment.reject', $payment) }}" method="POST">
-                            @csrf
-                            @method('PATCH')
-                            <button class="flex items-center gap-1.5 text-xs font-semibold text-white bg-red-500 px-3 py-1.5 rounded-full hover:bg-red-600 transition"
-                                    onclick="return confirm('Tolak pembayaran ini?')">
-                                <span class="w-3.5 h-3.5">{!! \App\Support\Icons::get('close') !!}</span> Tolak
-                            </button>
-                        </form>
+
+                        {{-- Tolak --}}
+                        <button @click="openReject({{ $payment->id }}, '{{ route('admin.payment.reject', $payment) }}')"
+                                class="flex items-center gap-1.5 text-xs font-semibold text-red-500 bg-red-50 px-3 py-1.5 rounded-full hover:bg-red-100 transition">
+                            <span class="w-3.5 h-3.5">{!! \App\Support\Icons::get('close') !!}</span> Tolak
+                        </button>
                     </div>
                     @endif
 
                     @if($payment->verified_at)
-                    <p class="text-[10px] text-gray-400 mt-1 flex items-center justify-end gap-1"><span class="w-2.5 h-2.5">{!! \App\Support\Icons::get('check') !!}</span> {{ $payment->verified_at->format('d M Y H:i') }}</p>
+                    <p class="text-[10px] text-gray-400 mt-1 flex items-center justify-end gap-1">
+                        <span class="w-2.5 h-2.5">{!! \App\Support\Icons::get('check') !!}</span>
+                        {{ $payment->verified_at->format('d M Y H:i') }}
+                        · oleh {{ $payment->verifiedBy?->name ?? 'Admin' }}
+                    </p>
                     @endif
-                    @if($payment->notes)
-                    <p class="text-[10px] text-red-400 mt-1">Catatan: {{ $payment->notes }}</p>
+                    @if($payment->status === 'rejected' && $payment->notes)
+                    <p class="text-[10px] text-red-400 mt-1">Alasan: {{ $payment->notes }}</p>
                     @endif
                 </div>
             </div>
@@ -106,5 +113,57 @@
         <p class="text-gray-400">Belum ada pembayaran masuk.</p>
     </div>
     @endif
+
+    {{-- MODAL: Alasan Penolakan --}}
+    <div x-show="rejectModal.show" x-transition.opacity.duration.200ms
+         class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+         style="display: none;"
+         @click.self="rejectModal.show = false">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6" @click.stop>
+            <h2 class="font-display text-lg font-bold text-gray-900 mb-1">Tolak Pembayaran</h2>
+            <p class="text-sm text-gray-500 mb-4">Pembayaran akan ditolak dan booking akan dibatalkan.</p>
+
+            <form :action="rejectModal.action" method="POST">
+                @csrf
+                @method('PATCH')
+                <div class="mb-4">
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Alasan Penolakan <span class="text-gray-400 font-normal">(opsional)</span></label>
+                    <textarea name="reject_notes" rows="3" x-model="rejectModal.notes"
+                              class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 focus:ring-2 focus:ring-red-400 focus:outline-none resize-none"
+                              placeholder="Tulis alasan penolakan..."></textarea>
+                </div>
+                <div class="flex gap-3">
+                    <button type="button" @click="rejectModal.show = false"
+                            class="flex-1 bg-gray-100 text-gray-700 font-semibold text-sm py-3 rounded-xl hover:bg-gray-200 transition">
+                        Batal
+                    </button>
+                    <button type="submit"
+                            class="flex-1 bg-red-500 text-white font-bold text-sm py-3 rounded-xl hover:bg-red-600 transition">
+                        Tolak Pembayaran
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('paymentActions', () => ({
+            rejectModal: {
+                show: false,
+                action: '',
+                notes: '',
+            },
+
+            openReject(paymentId, actionUrl) {
+                this.rejectModal.action = actionUrl;
+                this.rejectModal.notes = '';
+                this.rejectModal.show = true;
+            },
+        }));
+    });
+</script>
+@endpush

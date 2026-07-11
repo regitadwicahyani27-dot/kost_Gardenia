@@ -45,7 +45,7 @@ class BookingController extends Controller
         }
 
         $total = $room->price;
-        $dpAmount = 250000;
+        $dpAmount = Booking::DP_AMOUNT;
         $sisa = $total - $dpAmount;
 
         // Generate booking code
@@ -53,7 +53,7 @@ class BookingController extends Controller
         $count = Booking::whereYear('created_at', $year)->count() + 1;
         $bookingCode = 'GDN-' . str_pad(mt_rand(10000000, 99999999), 8, '0', STR_PAD_LEFT);
 
-        // Buat booking
+        // Buat booking (status pending, menunggu verifikasi admin)
         $booking = Booking::create([
             'user_id' => auth()->id(),
             'room_id' => $room->id,
@@ -62,16 +62,17 @@ class BookingController extends Controller
             'duration_months' => 1,
             'total_price' => $total,
             'dp_amount' => $dpAmount,
-            'status' => 'confirmed',
+            'status' => 'pending',
             'notes' => null,
         ]);
 
-        // Buat pembayaran DP (langsung verified karena simulasi)
-        $catatanBayar = 'Pembayaran DP otomatis (simulasi)';
+        // Catatan metode e-wallet (jika ada)
+        $ewalletNote = null;
         if (in_array($request->payment_method, ['dana', 'ovo']) && $request->ewallet_phone) {
-            $catatanBayar .= ' — No. ' . strtoupper($request->payment_method) . ': ' . $request->ewallet_phone;
+            $ewalletNote = 'No. ' . strtoupper($request->payment_method) . ': ' . $request->ewallet_phone;
         }
 
+        // Buat pembayaran DP dengan status PENDING (menunggu verifikasi admin)
         Payment::create([
             'booking_id' => $booking->id,
             'user_id' => auth()->id(),
@@ -79,14 +80,13 @@ class BookingController extends Controller
             'payment_method' => $request->payment_method,
             'payment_type' => 'dp',
             'proof_path' => null,
-            'status' => 'verified',
-            'verified_at' => now(),
-            'verified_by' => auth()->id(),
-            'notes' => $catatanBayar,
+            'status' => 'pending',
+            'verified_at' => null,
+            'verified_by' => null,
+            'notes' => $ewalletNote,
         ]);
 
-        // Ubah status kamar jadi TIDAK TERSEDIA
-        $room->update(['is_available' => false]);
+        // Kamar belum di-set unavailable — menunggu admin verifikasi pembayaran
 
         // Format tanggal Indonesia
         $checkInFormatted = \Carbon\Carbon::parse($request->check_in_date)
@@ -113,7 +113,7 @@ class BookingController extends Controller
 
         // Fallback non-AJAX
         return redirect()->route('user.booking.show', $booking)
-            ->with('success', 'Booking berhasil! Pembayaran DP telah terverifikasi.');
+            ->with('success', 'Booking berhasil! Pembayaran DP menunggu verifikasi admin.');
     }
 
     public function show(Booking $booking)
@@ -128,7 +128,7 @@ class BookingController extends Controller
     public function history()
     {
         $bookings = Booking::where('user_id', auth()->id())
-            ->with(['room.primaryPhoto', 'payments'])
+            ->with(['room.primaryPhoto', 'room.photos', 'payments'])
             ->latest()->paginate(10);
 
         return view('user.booking.history', compact('bookings'));

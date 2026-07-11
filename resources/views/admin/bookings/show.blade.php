@@ -57,7 +57,7 @@
                             <p class="text-sm font-bold text-[#2F4538]">Rp {{ number_format($booking->total_price, 0, ',', '.') }}</p>
                         </div>
                         <div class="bg-gray-50 rounded-xl p-4">
-                            <p class="text-xs text-gray-400 mb-1">DP Amount</p>
+                            <p class="text-xs text-gray-400 mb-1">DP Dibayar</p>
                             <p class="text-sm font-semibold text-gray-900">Rp {{ number_format($booking->dp_amount, 0, ',', '.') }}</p>
                         </div>
                     </div>
@@ -66,6 +66,18 @@
                     <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
                         <p class="text-xs font-semibold text-blue-800 mb-1">Catatan</p>
                         <p class="text-sm text-blue-700">{{ $booking->notes }}</p>
+                    </div>
+                    @endif
+
+                    {{-- Alasan Pembatalan --}}
+                    @if($booking->status === 'cancelled' && $booking->cancelled_reason)
+                    <div class="bg-red-50 border border-red-200 rounded-xl p-4">
+                        <p class="text-xs font-semibold text-red-800 mb-1">Alasan Pembatalan</p>
+                        <p class="text-sm text-red-700">{{ $booking->cancelled_reason }}</p>
+                        <p class="text-xs text-red-500 mt-2">
+                            Dibatalkan oleh: {{ $booking->cancelled_by === 'admin' ? 'Admin' : ($booking->cancelled_by === 'user' ? 'Pengguna' : ($booking->cancelled_by === 'system' ? 'Sistem' : $booking->cancelled_by)) }}
+                            &middot; {{ $booking->updated_at->translatedFormat('d F Y H:i') }}
+                        </p>
                     </div>
                     @endif
                 </div>
@@ -185,14 +197,18 @@
                     <h3 class="font-semibold text-gray-900">Ubah Status</h3>
                 </div>
                 <div class="p-6">
-                    <form action="{{ route('admin.booking.status', $booking) }}" method="POST" class="space-y-3">
+                    <form action="{{ route('admin.booking.status', $booking) }}" method="POST" class="space-y-3" x-data="{ selectedStatus: '{{ $booking->status }}' }">
                         @csrf
                         @method('PATCH')
-                        <select name="status" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#2F4538]">
+                        <select name="status" x-model="selectedStatus" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#2F4538]">
                             @foreach(['pending' => 'Menunggu', 'confirmed' => 'Dikonfirmasi', 'active' => 'Aktif', 'completed' => 'Selesai', 'cancelled' => 'Dibatalkan'] as $val => $label)
-                            <option value="{{ $val }}" {{ $booking->status === $val ? 'selected' : '' }}>{{ $label }}</option>
+                            <option value="{{ $val }}">{{ $label }}</option>
                             @endforeach
                         </select>
+                        <div x-show="selectedStatus === 'cancelled'" x-transition>
+                            <textarea name="cancel_reason" rows="2" placeholder="Alasan pembatalan (opsional)..."
+                                      class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 resize-none"></textarea>
+                        </div>
                         <button type="submit" class="w-full bg-[#2F4538] text-white font-bold text-sm py-3 rounded-xl hover:bg-[#26392E] transition">
                             Simpan Status
                         </button>

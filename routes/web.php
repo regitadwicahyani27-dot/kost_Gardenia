@@ -49,12 +49,11 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 
     // Kamar
     Route::resource('kamar', \App\Http\Controllers\Admin\RoomController::class);
-    Route::post('/kamar/{room}/foto', [\App\Http\Controllers\Admin\RoomController::class, 'uploadPhoto'])->name('kamar.foto');
+    Route::post('/kamar/{kamar}/foto', [\App\Http\Controllers\Admin\RoomController::class, 'uploadPhoto'])->name('kamar.foto');
     Route::delete('/foto/{photo}', [\App\Http\Controllers\Admin\RoomController::class, 'deletePhoto'])->name('foto.delete');
-    Route::patch('/kamar/{room}/toggle', [\App\Http\Controllers\Admin\RoomController::class, 'toggleAvailability'])->name('kamar.toggle'); // ← TAMBAH INI
+    Route::patch('/kamar/{kamar}/toggle', [\App\Http\Controllers\Admin\RoomController::class, 'toggleAvailability'])->name('kamar.toggle'); // ← TAMBAH INI
 
-    // Booking
-    Route::get('/booking', [\App\Http\Controllers\Admin\BookingController::class, 'index'])->name('booking.index');
+    // Booking (hanya detail & update status — index dihapus)
     Route::get('/booking/{booking}', [\App\Http\Controllers\Admin\BookingController::class, 'show'])->name('booking.show');
     Route::patch('/booking/{booking}/status', [\App\Http\Controllers\Admin\BookingController::class, 'updateStatus'])->name('booking.status');
 

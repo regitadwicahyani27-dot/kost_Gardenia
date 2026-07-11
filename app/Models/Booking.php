@@ -5,10 +5,13 @@ use Illuminate\Database\Eloquent\Model;
 
 class Booking extends Model
 {
+    /** DP tetap untuk semua booking */
+    public const DP_AMOUNT = 250_000;
+
     protected $fillable = [
         'user_id', 'room_id', 'booking_code',
         'check_in_date', 'duration_months',
-        'total_price', 'dp_amount', 'status', 'notes',
+        'total_price', 'dp_amount', 'status', 'notes', 'cancelled_reason', 'cancelled_by',
     ];
 
     protected $casts = [
@@ -37,11 +40,4 @@ class Booking extends Model
         return $this->hasOne(Testimonial::class);
     }
 
-    // Generate kode booking otomatis
-    public static function generateCode(): string
-    {
-        $year = date('Y');
-        $count = self::whereYear('created_at', $year)->count() + 1;
-        return 'GRD-' . $year . '-' . str_pad($count, 4, '0', STR_PAD_LEFT);
-    }
 }

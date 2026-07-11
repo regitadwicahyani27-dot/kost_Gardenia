@@ -60,16 +60,23 @@
                 {{-- FORM UPLOAD FOTO BARU: terpisah, bukan nested --}}
                 <form action="{{ route('admin.kamar.foto', $kamar) }}" method="POST" enctype="multipart/form-data" class="border-t border-gray-100 pt-4">
                     @csrf
-                    <p class="text-xs font-semibold text-gray-700 mb-2">Upload Foto Baru</p>
-                    <div class="flex items-center gap-3">
-                        <input type="file" name="photo" accept="image/*"
-                               class="flex-1 text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#2F4538]" />
-                        <button type="submit" class="bg-[#2F4538] text-white text-xs font-semibold px-4 py-2.5 rounded-xl hover:bg-[#26392E] transition whitespace-nowrap">
-                            Upload
-                        </button>
-                    </div>
-                    <p class="text-[10px] text-gray-400 mt-1">JPG / PNG / WebP &middot; Maks. 2MB</p>
-                    @error('photo') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                    <p class="text-xs font-semibold text-gray-700 mb-3">Upload Foto Baru</p>
+                    
+                    <label class="group block w-full rounded-xl border-2 border-dashed border-gray-200 overflow-hidden cursor-pointer relative hover:border-[#2F4538] transition mb-3" style="height:150px">
+                        <img id="preview-foto-baru" class="hidden w-full h-full object-cover absolute inset-0" />
+                        <div id="placeholder-foto-baru" class="absolute inset-0 flex flex-col items-center justify-center gap-2 text-gray-400 group-hover:text-[#2F4538] transition bg-gray-50 group-hover:bg-[#2F4538]/5">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v16m8-8H4"/></svg>
+                            <span class="text-xs font-medium">Klik untuk pilih foto</span>
+                            <span class="text-[10px] text-gray-400">JPG / PNG / WebP &middot; Maks. 2MB</span>
+                        </div>
+                        <input type="file" name="photo" accept="image/*" class="hidden" onchange="previewFoto(this, 'preview-foto-baru', 'placeholder-foto-baru')" />
+                    </label>
+
+                    <button type="submit" class="w-full bg-[#2F4538] text-white text-xs font-bold px-4 py-3 rounded-xl hover:bg-[#26392E] transition flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                        Upload Foto ke Galeri
+                    </button>
+                    @error('photo') <p class="text-xs text-red-500 mt-2">{{ $message }}</p> @enderror
                 </form>
             </div>
 
@@ -108,7 +115,7 @@
 
                     <div>
                         <label for="price" class="block text-sm font-semibold text-gray-700 mb-1">Harga per Bulan (Rp) <span class="text-red-500">*</span></label>
-                        <input id="price" name="price" type="number" value="{{ old('price', $kamar->price) }}" min="0"
+                        <input id="price" name="price" type="number" value="{{ old('price', (int) $kamar->price) }}" min="0"
                                class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#2F4538] @error('price') border-red-400 @enderror" />
                         @error('price') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                     </div>
@@ -148,4 +155,26 @@
         </div>
     </div>
 </div>
+
+@push('scripts')
+<script>
+function previewFoto(input, previewId, placeholderId) {
+    const file = input.files[0];
+    if (!file) {
+        document.getElementById(previewId).classList.add('hidden');
+        document.getElementById(placeholderId).style.display = 'flex';
+        return;
+    }
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const img = document.getElementById(previewId);
+        const ph = document.getElementById(placeholderId);
+        img.src = e.target.result;
+        img.classList.remove('hidden');
+        if (ph) ph.style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+}
+</script>
+@endpush
 @endsection

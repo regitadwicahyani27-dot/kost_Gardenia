@@ -29,8 +29,13 @@ class DashboardController extends Controller
                 ->count(),
         ];
 
-        $recentBookings = Booking::with(['user', 'room'])->latest()->take(5)->get();
+        $recentBookings = Booking::with(['user', 'room', 'payments'])->latest()->take(5)->get();
 
-        return view('admin.dashboard', compact('stats', 'recentBookings'));
+        $pendingPayments = Payment::with(['user', 'booking.room'])
+            ->where('status', 'pending')
+            ->latest()
+            ->get();
+
+        return view('admin.dashboard', compact('stats', 'recentBookings', 'pendingPayments'));
     }
 }

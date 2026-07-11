@@ -7,12 +7,6 @@ use Illuminate\Http\Request;
 
 class BookingController extends Controller
 {
-    public function index()
-    {
-        $bookings = Booking::with(['user', 'room'])->latest()->paginate(15);
-        return view('admin.bookings.index', compact('bookings'));
-    }
-
     public function show(Booking $booking)
     {
         $booking->load(['user', 'room.photos', 'payments']);
@@ -21,8 +15,20 @@ class BookingController extends Controller
 
     public function updateStatus(Request $request, Booking $booking)
     {
-        $request->validate(['status' => 'required|in:pending,confirmed,active,cancelled,completed']);
-        $booking->update(['status' => $request->status]);
+        $request->validate([
+            'status' => 'required|in:pending,confirmed,active,cancelled,completed',
+            'cancel_reason' => 'nullable|string|max:500',
+        ]);
+
+        $data = ['status' => $request->status];
+
+        // Kalau dibatalkan, catat alasan dan siapa yang batalkan
+        if ($request->status === 'cancelled') {
+            $data['cancelled_reason'] = $request->cancel_reason ?: 'Dibatalkan oleh admin.';
+            $data['cancelled_by'] = 'admin';
+        }
+
+        $booking->update($data);
 
         // Sinkronkan ketersediaan kamar dengan status booking terbaru.
         // Booking batal/selesai -> kamar dibebaskan lagi. Selain itu -> kamar tetap terisi.

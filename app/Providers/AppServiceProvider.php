@@ -19,7 +19,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Tambahkan di method boot()
-\Illuminate\Support\Facades\URL::forceScheme('http'); // opsional untuk local
+\Illuminate\Support\Facades\URL::forceScheme('http');
     }
 }

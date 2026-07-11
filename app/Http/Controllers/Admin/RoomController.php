@@ -25,16 +25,35 @@ class RoomController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $data = $request->all();
+
+        // Bersihkan array photos dari input kosong (yang tidak dipilih filenya)
+        // Jika file terlalu besar (UPLOAD_ERR_INI_SIZE), biarkan agar ditangkap oleh validator
+        if (isset($data['photos']) && is_array($data['photos'])) {
+            $data['photos'] = array_filter($data['photos'], function($f) {
+                return $f instanceof \Illuminate\Http\UploadedFile && $f->getError() !== UPLOAD_ERR_NO_FILE;
+            });
+            if (empty($data['photos'])) {
+                unset($data['photos']); // Hapus array jika benar-benar kosong
+            }
+        }
+
+        $validated = \Illuminate\Support\Facades\Validator::make($data, [
             'name' => 'required|string|max:255',
             'type' => 'required|in:standard,deluxe,vip',
             'floor' => 'required|in:1,2',
             'price' => 'required|integer|min:0',
             'description' => 'nullable|string',
-            'photos.*' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'photos' => 'nullable|array',
+            'photos.*' => 'image|mimes:jpg,jpeg,png,webp|max:2048',
             'facilities' => 'nullable|array',
             'facilities.*' => 'exists:facilities,id',
-        ]);
+        ], [
+            'photos.*.image' => 'File yang diunggah harus berupa gambar.',
+            'photos.*.mimes' => 'Format foto kamar harus JPG, JPEG, PNG, atau WebP.',
+            'photos.*.max' => 'Ukuran setiap foto kamar maksimal 2MB.',
+            'photos.*.uploaded' => 'Gagal mengunggah foto. Pastikan ukuran file tidak lebih dari 2MB.',
+        ])->validate();
 
         $kamar = Room::create([
             'name' => $request->name,
@@ -112,6 +131,11 @@ class RoomController extends Controller
     {
         $request->validate([
             'photo' => 'required|image|mimes:jpg,jpeg,png,webp|max:2048',
+        ], [
+            'photo.image' => 'File yang diunggah harus berupa gambar.',
+            'photo.mimes' => 'Format foto kamar harus JPG, JPEG, PNG, atau WebP.',
+            'photo.max' => 'Ukuran foto maksimal 2MB.',
+            'photo.uploaded' => 'Gagal mengunggah foto. Pastikan ukuran file tidak lebih dari 2MB.',
         ]);
 
         $path = $request->file('photo')->store('rooms', 'public');

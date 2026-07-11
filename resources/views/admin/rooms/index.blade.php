@@ -45,15 +45,15 @@
 
             {{-- Aksi --}}
             <div class="flex gap-2 flex-shrink-0 flex-wrap justify-end">
-                {{-- Toggle Tersedia/Terisi --}}
+                {{-- Buka Kamar --}}
                 @if(!$room->is_available)
                 <form action="{{ route('admin.kamar.toggle', $room) }}" method="POST">
                     @csrf
                     @method('PATCH')
                     <button type="submit"
-                            class="text-xs font-semibold text-green-600 border border-green-300 px-3 py-1.5 rounded-full hover:bg-green-500 hover:text-white transition"
-                            onclick="return confirm('Ubah status {{ $room->name }} menjadi Tersedia? Pengguna baru bisa melakukan DP.')">
-                        &#10003; Buka Booking
+                            class="text-xs font-semibold text-white bg-green-500 px-3 py-1.5 rounded-full hover:bg-green-600 transition"
+                            onclick="return confirm('Buka kamar {{ $room->name }} jadi Tersedia kembali?')">
+                        Buka Kamar
                     </button>
                 </form>
                 @endif

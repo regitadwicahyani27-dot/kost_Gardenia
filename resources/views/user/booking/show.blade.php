@@ -3,8 +3,6 @@
 @section('title', 'Detail Booking - Kos Putri Gardenia')
 
 @section('content')
-
-@include('components.payment-receipt')
 <div class="max-w-2xl mx-auto px-6 py-10">
     <a href="{{ route('user.booking.history') }}" class="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-[#2F4538] transition mb-6">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>

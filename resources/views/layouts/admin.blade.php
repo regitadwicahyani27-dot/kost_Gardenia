@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'Admin - Kos Putri Gardenia')</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -25,30 +26,7 @@
             </a>
             <div class="flex items-center gap-4">
                 <a href="{{ route('home') }}" class="text-sm text-gray-500 hover:text-[#2F4538] transition hidden md:inline">Lihat Website</a>
-                <div class="relative" id="btn-profil">
-                    <button onclick="toggleDropdown()" class="flex items-center gap-2 bg-[#2F4538] text-white text-sm font-semibold px-4 py-2 rounded-full hover:bg-[#26392E] transition">
-                        <div class="w-6 h-6 rounded-full bg-white/30 flex items-center justify-center text-xs font-bold">{{ substr(auth()->user()->name, 0, 1) }}</div>
-                        <span class="max-w-[100px] truncate">{{ Str::before(auth()->user()->name, ' ') }}</span>
-                        <svg class="w-3.5 h-3.5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
-                    </button>
-                    <div id="dropdown-profil" class="hidden absolute right-0 top-full mt-2 bg-white rounded-2xl shadow-xl border border-gray-100 w-56 z-50 overflow-hidden">
-                        <div class="px-4 py-3 border-b border-gray-100">
-                            <p class="text-xs text-gray-400">Admin</p>
-                            <p class="text-sm font-semibold text-gray-900 truncate">{{ auth()->user()->name }}</p>
-                        </div>
-                        <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6z"/></svg>
-                            Dashboard
-                        </a>
-                        <form method="POST" action="{{ route('logout') }}">
-                            @csrf
-                            <button type="submit" class="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-500 hover:bg-red-50 transition">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-                                Keluar
-                            </button>
-                        </form>
-                    </div>
-                </div>
+                <x-user-nav-dropdown />
             </div>
         </div>
     </header>
@@ -79,29 +57,11 @@
                class="px-5 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap transition {{ request()->routeIs('admin.kamar.*') ? 'bg-[#2F4538] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
                 Kelola Kamar
             </a>
-            <a href="{{ route('admin.booking.index') }}"
-               class="px-5 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap transition {{ request()->routeIs('admin.booking.*') ? 'bg-[#2F4538] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
-                Booking
-            </a>
-            <a href="{{ route('admin.payment.index') }}"
-               class="px-5 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap transition {{ request()->routeIs('admin.payment.*') ? 'bg-[#2F4538] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
-                Pembayaran
-            </a>
         </nav>
 
         @yield('content')
     </div>
 
-    <script>
-        function toggleDropdown() {
-            document.getElementById('dropdown-profil').classList.toggle('hidden');
-        }
-        document.addEventListener('click', function(e) {
-            const profil = document.getElementById('btn-profil');
-            const dropdown = document.getElementById('dropdown-profil');
-            if (profil && dropdown && !profil.contains(e.target)) dropdown.classList.add('hidden');
-        });
-    </script>
     @stack('scripts')
 </body>
 </html>
