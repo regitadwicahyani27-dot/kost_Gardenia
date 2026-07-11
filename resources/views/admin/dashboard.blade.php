@@ -41,6 +41,10 @@
 
     {{-- Booking Terbaru --}}
     <h2 class="font-semibold text-gray-900 mb-4">Booking Terbaru</h2>
+    @php
+        $statusColors = ['pending' => 'bg-amber-100 text-amber-700', 'confirmed' => 'bg-blue-100 text-blue-700', 'active' => 'bg-green-100 text-green-700', 'cancelled' => 'bg-red-100 text-red-700', 'completed' => 'bg-gray-100 text-gray-700'];
+        $statusLabels = ['pending' => 'Menunggu', 'confirmed' => 'Dikonfirmasi', 'active' => 'Aktif', 'cancelled' => 'Dibatalkan', 'completed' => 'Selesai'];
+    @endphp
     @if($recentBookings->count())
     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div class="overflow-x-auto">
@@ -57,10 +61,6 @@
                 </thead>
                 <tbody>
                     @foreach($recentBookings as $booking)
-                    @php
-                        $statusColors = ['pending' => 'bg-amber-100 text-amber-700', 'confirmed' => 'bg-blue-100 text-blue-700', 'active' => 'bg-green-100 text-green-700', 'cancelled' => 'bg-red-100 text-red-700', 'completed' => 'bg-gray-100 text-gray-700'];
-                        $statusLabels = ['pending' => 'Menunggu', 'confirmed' => 'Dikonfirmasi', 'active' => 'Aktif', 'cancelled' => 'Dibatalkan', 'completed' => 'Selesai'];
-                    @endphp
                     <tr class="border-b border-gray-50 hover:bg-gray-50 transition">
                         <td class="px-5 py-3 font-mono text-xs font-semibold text-gray-700">{{ $booking->booking_code }}</td>
                         <td class="px-5 py-3 text-gray-900">{{ $booking->user->name }}</td>
@@ -159,6 +159,9 @@
 
 {{-- Data JSON untuk modal --}}
 @php
+$statusColors = ['pending' => 'bg-amber-100 text-amber-700', 'confirmed' => 'bg-blue-100 text-blue-700', 'active' => 'bg-green-100 text-green-700', 'cancelled' => 'bg-red-100 text-red-700', 'completed' => 'bg-gray-100 text-gray-700'];
+$statusLabels = ['pending' => 'Menunggu', 'confirmed' => 'Dikonfirmasi', 'active' => 'Aktif', 'cancelled' => 'Dibatalkan', 'completed' => 'Selesai'];
+
 $mappedBookings = $recentBookings->keyBy('id')->map(function($booking) use ($statusLabels, $statusColors) {
     return [
         'id' => $booking->id,
