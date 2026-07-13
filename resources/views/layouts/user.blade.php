@@ -46,6 +46,7 @@
             <a href="{{ route('tentang') }}" class="transition {{ request()->routeIs('tentang') ? 'text-[#2F4538] font-bold border-l-2 border-[#2F4538] pl-2' : 'hover:text-[#2F4538]' }}">Tentang Kami</a>
             <hr class="border-gray-100">
 
+            <a href="{{ route('user.dashboard') }}" class="hover:text-[#2F4538]">Dashboard</a>
             <a href="{{ route('user.profile.edit') }}" class="hover:text-[#2F4538]">Profil</a>
             <a href="{{ route('user.booking.history') }}" class="hover:text-[#2F4538]">Riwayat</a>
             <form method="POST" action="{{ route('logout') }}">

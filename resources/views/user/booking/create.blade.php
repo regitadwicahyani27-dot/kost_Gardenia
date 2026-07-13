@@ -186,7 +186,7 @@
         </div>
         <div id="konten-qris" class="text-center">
             <div class="bg-white border-2 border-gray-100 rounded-2xl p-5 inline-block mb-3">
-                <img src="https://via.placeholder.com/220x220/2F4538/ffffff?text=QRIS+Code" alt="QRIS" class="w-44 h-44 object-cover rounded-lg" />
+                <img src="{{ asset('images/qr-payment.png') }}" alt="QR Code Pembayaran" class="w-48 h-48 object-contain rounded-lg" />
             </div>
             <p class="text-sm font-semibold text-gray-900">Scan QRIS via aplikasi apa saja</p>
             <p class="text-xs text-gray-500 mt-1 mb-4">GoPay, OVO, DANA, ShopeePay, Mobile Banking — semua bisa scan kode ini.</p>

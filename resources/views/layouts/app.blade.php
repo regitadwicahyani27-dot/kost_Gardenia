@@ -105,7 +105,7 @@
     @yield('content')
 
     {{-- Footer --}}
-    <footer class="bg-[#2F4538] text-white">
+    <footer class="text-white" style="background: linear-gradient(to right, #1E2E23, #2F4538, #3A5444)">
         <div class="max-w-6xl mx-auto px-6 py-12 grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
                 <h3 class="font-display text-lg font-bold">Pastinya Dekat<br>Semua Jangkauan</h3>
@@ -126,7 +126,6 @@
                     <li><a href="{{ route('home') }}" class="hover:text-white">Beranda</a></li>
                     <li><a href="{{ route('rooms.index') }}" class="hover:text-white">Kamar</a></li>
                     <li><a href="{{ route('tentang') }}" class="hover:text-white">Tentang Kami</a></li>
-                    <li><a href="#" onclick="bukaPopupWA(); return false;" class="hover:text-white">Kontak</a></li>
                 </ul>
             </div>
         </div>

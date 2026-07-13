@@ -57,6 +57,14 @@
                class="px-5 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap transition {{ request()->routeIs('admin.kamar.*') ? 'bg-[#2F4538] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
                 Kelola Kamar
             </a>
+            <a href="{{ route('admin.payment.index') }}"
+               class="px-5 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap transition {{ request()->routeIs('admin.payment.*') ? 'bg-[#2F4538] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
+                Pembayaran
+            </a>
+            <a href="{{ route('admin.testimonial.index') }}"
+               class="px-5 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap transition {{ request()->routeIs('admin.testimonial.*') ? 'bg-[#2F4538] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
+                Testimoni
+            </a>
         </nav>
 
         @yield('content')
