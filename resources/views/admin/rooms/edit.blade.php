@@ -43,7 +43,7 @@
                         {{-- FORM HAPUS FOTO: terpisah, bukan nested --}}
                         <form action="{{ route('admin.foto.delete', $photo) }}" method="POST"
                               class="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition flex items-center justify-center"
-                              onsubmit="return confirm('Yakin hapus foto ini?')">
+                              onsubmit="event.preventDefault(); const f=this; showConfirm('Yakin hapus foto ini?', function() { f.submit(); })">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="hidden group-hover:flex bg-red-500 text-white text-xs font-semibold px-3 py-1.5 rounded-full hover:bg-red-600 transition">

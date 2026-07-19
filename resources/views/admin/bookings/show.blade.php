@@ -138,7 +138,7 @@
                                     @csrf
                                     @method('PATCH')
                                     <button class="flex items-center gap-1.5 text-xs font-semibold text-white bg-red-500 px-4 py-2 rounded-full hover:bg-red-600 transition"
-                                            onclick="return confirm('Tolak pembayaran ini?')">
+                                            onclick="event.preventDefault(); const f=this.closest('form'); showConfirm('Tolak pembayaran ini?', function() { f.submit(); })">
                                         <span class="w-3.5 h-3.5">{!! \App\Support\Icons::get('close') !!}</span> Tolak
                                     </button>
                                 </form>

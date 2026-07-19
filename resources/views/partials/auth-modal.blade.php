@@ -77,11 +77,10 @@
                 </div>
 
                 <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2">
+                    <label for="login-remember" class="flex items-center gap-2 text-sm text-gray-600">
                         <input id="login-remember" name="remember" type="checkbox" class="accent-[#2F4538] w-4 h-4" {{ old('remember') ? 'checked' : '' }} />
-                        <label for="login-remember" class="text-sm text-gray-600">Ingat saya</label>
-                    </div>
-                    <a href="{{ route('password.request') }}" class="text-xs text-[#2F4538] hover:underline">Lupa kata sandi?</a>
+                        Ingat saya
+                    </label>
                 </div>
 
                 <button type="submit" class="w-full bg-[#2F4538] text-white font-bold text-sm py-3.5 rounded-xl hover:bg-[#26392E] transition mt-2">

@@ -60,7 +60,7 @@
                                 Edit
                             </a>
                             <form action="{{ route('admin.testimonial.destroy', $t) }}" method="POST" class="flex-1"
-                                onsubmit="return confirm('Yakin hapus testimoni ini?')">
+                                onsubmit="event.preventDefault(); const f=this; showConfirm('Yakin hapus testimoni ini?', function() { f.submit(); })">
                                 @csrf
                                 @method('DELETE')
                                 <button class="w-full flex items-center justify-center gap-1.5 text-xs font-semibold text-red-500 border border-red-200 px-4 py-2 rounded-full hover:bg-red-500 hover:text-white transition">

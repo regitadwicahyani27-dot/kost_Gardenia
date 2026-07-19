@@ -72,7 +72,7 @@
                     @if($payment->status === 'pending')
                     <div class="flex gap-2">
                         {{-- Setujui --}}
-                        <form action="{{ route('admin.payment.verify', $payment) }}" method="POST" onsubmit="return confirm('Setujui pembayaran ini? Booking akan dikonfirmasi.')">
+                        <form action="{{ route('admin.payment.verify', $payment) }}" method="POST" onsubmit="event.preventDefault(); const f=this; showConfirm('Setujui pembayaran ini? Booking akan dikonfirmasi.', function() { f.submit(); })">
                             @csrf
                             @method('PATCH')
                             <button class="flex items-center gap-1.5 text-xs font-semibold text-white bg-green-500 px-3 py-1.5 rounded-full hover:bg-green-600 transition">

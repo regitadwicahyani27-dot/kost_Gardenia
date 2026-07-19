@@ -346,7 +346,7 @@
 
     function bukaPopupPembayaran() {
         const tanggal = document.getElementById('check_in_date').value;
-        if (!tanggal) { alert('Pilih tanggal masuk terlebih dahulu!'); return; }
+        if (!tanggal) { showToast('Pilih tanggal masuk terlebih dahulu!', 'warning'); return; }
         document.getElementById('popup-bayar').classList.remove('hidden');
         document.body.style.overflow = 'hidden';
     }
@@ -392,7 +392,7 @@
     }
 
     function salinRekening() {
-        navigator.clipboard.writeText('1234567890').then(() => { alert('Nomor rekening berhasil disalin!'); });
+        navigator.clipboard.writeText('1234567890').then(() => { showToast('Nomor rekening berhasil disalin!', 'success'); });
     }
 
     function konfirmasiBayar() {
@@ -442,7 +442,7 @@
                 document.getElementById('popup-bukti').classList.remove('hidden');
                 document.body.style.overflow = 'hidden';
             } else {
-                alert(data.message || 'Terjadi kesalahan');
+                showToast(data.message || 'Terjadi kesalahan', 'error');
             }
         })
         .catch(error => {

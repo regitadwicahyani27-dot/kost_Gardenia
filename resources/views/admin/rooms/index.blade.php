@@ -52,7 +52,7 @@
                     @method('PATCH')
                     <button type="submit"
                             class="text-xs font-semibold text-white bg-green-500 px-3 py-1.5 rounded-full hover:bg-green-600 transition"
-                            onclick="return confirm('Buka kamar {{ $room->name }} jadi Tersedia kembali?')">
+                            onclick="event.preventDefault(); const f=this.closest('form'); showConfirm('Buka kamar {{ $room->name }} jadi Tersedia kembali?', function() { f.submit(); })">
                         Buka Kamar
                     </button>
                 </form>
@@ -64,7 +64,7 @@
                 </a>
 
                 <form action="{{ route('admin.kamar.destroy', $room) }}" method="POST"
-                      onsubmit="return confirm('Yakin ingin menghapus kamar {{ $room->name }}?')">
+                      onsubmit="event.preventDefault(); const f=this; showConfirm('Yakin ingin menghapus kamar {{ $room->name }}?', function() { f.submit(); })">
                     @csrf
                     @method('DELETE')
                     <button type="submit"

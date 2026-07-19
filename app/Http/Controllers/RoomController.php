@@ -9,7 +9,7 @@ class RoomController extends Controller
     // Halaman publik (tanpa login)
     public function index()
     {
-        $query = Room::where('is_available', true)->with(['primaryPhoto', 'facilities']);
+        $query = Room::where('is_available', true)->noActiveBooking()->with(['primaryPhoto', 'facilities']);
 
         if (request('lantai')) {
             $query->where('floor', request('lantai'));
@@ -28,7 +28,7 @@ class RoomController extends Controller
     // Halaman user (setelah login)
     public function indexUser()
     {
-        $query = Room::with(['primaryPhoto', 'facilities']);
+        $query = Room::where('is_available', true)->noActiveBooking()->with(['primaryPhoto', 'facilities']);
 
         if (request('lantai')) {
             $query->where('floor', request('lantai'));

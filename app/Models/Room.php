@@ -33,4 +33,10 @@ class Room extends Model
     {
         return $this->hasMany(Booking::class);
     }
+
+    // ponytail: exclude rooms with pending/confirmed/active bookings
+    public function scopeNoActiveBooking($query)
+    {
+        return $query->whereDoesntHave('bookings', fn($q) => $q->whereIn('status', ['pending', 'confirmed', 'active']));
+    }
 }

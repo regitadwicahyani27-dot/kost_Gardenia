@@ -124,7 +124,7 @@
                         </td>
                         <td class="px-5 py-4">
                             <div class="flex items-center justify-end gap-2">
-                                <form action="{{ route('admin.payment.verify', $payment) }}" method="POST" onsubmit="return confirm('Verifikasi pembayaran ini?')">
+                                <form action="{{ route('admin.payment.verify', $payment) }}" method="POST" onsubmit="event.preventDefault(); const f=this; showConfirm('Verifikasi pembayaran ini?', function() { f.submit(); })">
                                     @csrf
                                     @method('PATCH')
                                     <button type="submit" class="inline-flex items-center gap-1.5 bg-[#2F4538] text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-[#26392E] transition">
@@ -132,7 +132,7 @@
                                         Approve
                                     </button>
                                 </form>
-                                <form action="{{ route('admin.payment.reject', $payment) }}" method="POST" onsubmit="return confirm('Tolak pembayaran ini?')">
+                                <form action="{{ route('admin.payment.reject', $payment) }}" method="POST" onsubmit="event.preventDefault(); const f=this; showConfirm('Tolak pembayaran ini?', function() { f.submit(); })">
                                     @csrf
                                     @method('PATCH')
                                     <button type="submit" class="inline-flex items-center gap-1.5 bg-red-50 text-red-600 text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-red-100 transition border border-red-100 hover:border-red-200">

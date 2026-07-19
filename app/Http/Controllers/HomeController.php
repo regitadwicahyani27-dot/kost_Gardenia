@@ -8,7 +8,7 @@ class HomeController extends Controller
 {
     public function index()
     {
-        $rooms = Room::where('is_available', true)->with('primaryPhoto')->take(3)->get();
+        $rooms = Room::where('is_available', true)->noActiveBooking()->with('primaryPhoto')->take(3)->get();
         $testimonials = Testimonial::where('status', 'approved')->with('user')->latest()->take(3)->get();
 
         return view('home', compact('rooms', 'testimonials'));
