@@ -1,0 +1,60 @@
+# Gardenia Kos — Kos Putri Gardenia
+
+Laravel 12 kos management app (putri-only boarding house).
+
+## Stack
+- **Backend:** Laravel 12, PHP 8.2+, MySQL/SQLite
+- **Frontend:** Tailwind CSS CDN, Alpine.js 3.x CDN, Blade
+- **Icons:** `App\Support\Icons` (SVG inline via `{!! \App\Support\Icons::get('name') !!}`)
+- **Facilities:** `App\Support\RoomFacilities::all()` — hardcoded per-kamar
+
+## Design tokens
+- Primary: `#2F4538` (dark green), hover: `#26392E`
+- Background: `#FAF7F2` (warm cream)
+- Font: Playfair Display (headings `.font-display`), Inter (body)
+- Radius: `rounded-2xl` untuk card, `rounded-full` untuk button/pill
+
+## Authentication
+- Modal popup (gak ada halaman login/register terpisah)
+- `AuthenticatedSessionController@create` redirect ke home dengan flash `open_auth`
+- Admin middleware: `App\Http\Middleware\AdminMiddleware` (ngecek `auth()->user()->isAdmin()`)
+- User model: `$user->role === 'admin'` via `isAdmin()` helper
+
+## Layouts
+| Layout | Untuk | Navbar dropdown |
+|--------|-------|-----------------|
+| `layouts/admin.blade.php` | Area admin (kelola kamar, booking, pembayaran, testimoni) | `<x-user-nav-dropdown />` |
+| `layouts/user.blade.php` | User login (dashboard, booking, riwayat, profil) | `<x-user-nav-dropdown />` |
+| `layouts/app.blade.php` | Publik (beranda, kamar, tentang, auth modal) | `<x-user-nav-dropdown />` + `@guest` guard |
+
+## Key components (2 aja — sisanya udah dibersihkan)
+- `<x-user-nav-dropdown />` — dropdown navbar kanan, auto-detect role. Items: Dashboard Admin (admin only), Profil (all), Riwayat (non-admin only), Keluar (all)
+- `<x-user-avatar :user="auth()->user()" size="sm|md|lg" />` — avatar lingkaran, fallback inisial
+- `@include('components.booking-detail-modal')` — modal detail booking di admin dashboard (Alpine.js store `$store.bookingModal`)
+
+## Routes
+- `routes/web.php` — publik + user (prefix `user.`) + admin (prefix `admin.` dengan middleware `auth` + `admin`)
+- `routes/auth.php` — Breeze scaffolding (sebagian broken: auth views dihapus tapi controller redirect ke home untuk login/register)
+
+## Admin panel
+- **Dashboard:** stat cards + recent bookings table + pending payments
+- **Kelola Kamar:** CRUD + upload foto + facility attach + toggle availability
+- **Pembayaran:** verify/reject dengan booking status sync
+- **Testimoni:** CRUD (admin-managed, bukan user-submitted)
+
+## User flow
+Booking → pilih kamar → isi form → booking pending → upload bukti bayar → admin verifikasi → booking confirmed → kamar unavailable
+
+## Storage
+- `config/filesystems.php` — public disk root di `public_path('storage')` (langsung, bukan symlink — buat shared hosting InfinityFree)
+- Upload paths: `avatars/`, `rooms/`, `payments/`
+
+## Known quirks
+- Tailwind & Alpine via CDN (gak ada build step, gak ada Vite di production)
+- Breeze components dihapus sebagian (dropdown, nav-link, auth views tinggal controller doang)
+- `components/navbar.blade.php` udah dihapus (dead code)
+- `Booking::generateCode()` dihapus — kode booking dibuat inline di `BookingController::store()`
+
+## Admin credentials (seeder)
+- Email: `admin@gardenia.com`
+- Password: `admin123`
