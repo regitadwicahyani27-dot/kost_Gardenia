@@ -9,7 +9,7 @@ use App\Models\User;
 
 class DashboardController extends Controller
 {
-    public function index()
+    public function index(\Illuminate\Http\Request $request)
     {
         $stats = [
             'total_rooms' => Room::count(),
@@ -29,13 +29,31 @@ class DashboardController extends Controller
                 ->count(),
         ];
 
-        $recentBookings = Booking::with(['user', 'room', 'payments'])->latest()->take(5)->get();
+        $paymentBookingsQuery = Booking::with(['user', 'room', 'payments.verifiedBy'])
+            ->has('payments')
+            ->latest();
 
-        $pendingPayments = Payment::with(['user', 'booking.room'])
-            ->where('status', 'pending')
-            ->latest()
-            ->get();
+        if ($request->status === 'pending') {
+            $paymentBookingsQuery->whereHas('payments', fn($q) => $q->where('status', 'pending'));
+        } elseif ($request->status === 'verified') {
+            $paymentBookingsQuery->whereDoesntHave('payments', fn($q) => $q->where('status', 'pending'))
+                ->whereHas('payments', fn($q) => $q->where('status', 'verified'));
+        } elseif ($request->status === 'rejected') {
+            $paymentBookingsQuery->whereHas('payments', fn($q) => $q->where('status', 'rejected'));
+        }
 
-        return view('admin.dashboard', compact('stats', 'recentBookings', 'pendingPayments'));
+        $paymentBookings = $paymentBookingsQuery->paginate(5)->appends($request->only('status'));
+
+        return view('admin.dashboard', compact('stats', 'paymentBookings'));
+    }
+
+    public function checkNew()
+    {
+        return response()->json([
+            'max_payment_id' => Payment::max('id') ?? 0,
+            'max_booking_id' => Booking::max('id') ?? 0,
+            'pending_payments_count' => Payment::where('status', 'pending')->count(),
+            'pending_bookings_count' => Booking::where('status', 'pending')->count(),
+        ]);
     }
 }

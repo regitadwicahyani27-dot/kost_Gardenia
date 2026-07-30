@@ -57,6 +57,10 @@
     <script>
         window.bookingData = {
             @foreach($bookings as $booking)
+            @php
+                $totalVerified = $booking->payments->where('status', 'verified')->sum('amount');
+                $sisaAmount = max(0, $booking->total_price - $totalVerified);
+            @endphp
             {{ $booking->id }}: {
                 id: {{ $booking->id }},
                 booking_code: '{{ $booking->booking_code }}',
@@ -72,7 +76,8 @@
                 duration: {{ $booking->duration_months }},
                 totalPrice: '{{ number_format($booking->total_price, 0, ',', '.') }}',
                 dpAmount: '{{ number_format($booking->dp_amount, 0, ',', '.') }}',
-                sisa: '{{ number_format($booking->total_price - $booking->dp_amount, 0, ',', '.') }}',
+                sisa: '{{ number_format($sisaAmount, 0, ',', '.') }}',
+                sisaRaw: {{ $sisaAmount }},
                 payments: [
                     @foreach($booking->payments as $payment)
                     {
@@ -159,12 +164,31 @@
                     </div>
                 </template>
 
-                {{-- Sisa Pembayaran --}}
-                <div class="bg-amber-50 border border-amber-200 rounded-xl p-4" x-show="booking.status !== 'cancelled'">
-                    <p class="text-xs font-semibold text-amber-800">Sisa Pembayaran</p>
-                    <p class="text-lg font-bold text-amber-700">Rp <span x-text="booking.sisa"></span></p>
-                    <p class="text-xs text-amber-600 mt-1">Dibayar saat check-in di lokasi</p>
-                </div>
+                {{-- Sisa Pembayaran (tampil jika belum lunas) --}}
+                <template x-if="['confirmed', 'active'].includes(booking.status) && (booking.sisaRaw > 0 || booking.sisaRaw === undefined)">
+                    <div class="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                        <p class="text-xs font-semibold text-amber-800">Sisa Pembayaran</p>
+                        <p class="text-lg font-bold text-amber-700">Rp <span x-text="booking.sisa"></span></p>
+                        <p class="text-xs text-amber-600 mt-1">Dibayar saat check-in di lokasi</p>
+                    </div>
+                </template>
+
+                {{-- Status Lunas (tampil jika sudah completed atau sisa 0) --}}
+                <template x-if="booking.status === 'completed' || (booking.status !== 'cancelled' && booking.sisaRaw === 0)">
+                    <div class="bg-green-50 border border-green-200 rounded-xl p-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
+                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-sm font-bold text-green-800">Pembayaran Lunas</p>
+                                <p class="text-xs text-green-600 mt-0.5">Semua pembayaran telah diselesaikan</p>
+                            </div>
+                        </div>
+                    </div>
+                </template>
 
                 {{-- Riwayat Pembayaran --}}
                 <template x-if="booking.payments && booking.payments.length">

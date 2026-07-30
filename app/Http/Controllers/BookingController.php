@@ -137,4 +137,21 @@ class BookingController extends Controller
 
         return view('user.booking.history', compact('bookings'));
     }
+
+    public function checkUserStatus()
+    {
+        $user = auth()->user();
+        if (!$user) {
+            return response()->json(['logged_in' => false]);
+        }
+
+        $latestPayment = Payment::where('user_id', $user->id)->latest('updated_at')->first();
+        $latestBooking = Booking::where('user_id', $user->id)->latest('updated_at')->first();
+
+        return response()->json([
+            'logged_in' => true,
+            'last_payment_updated' => $latestPayment ? $latestPayment->updated_at->timestamp : 0,
+            'last_booking_updated' => $latestBooking ? $latestBooking->updated_at->timestamp : 0,
+        ]);
+    }
 }

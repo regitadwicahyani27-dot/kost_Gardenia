@@ -41,11 +41,13 @@ Route::middleware(['auth'])->prefix('user')->name('user.')->group(function () {
     Route::post('/pembayaran/{booking}', [PaymentController::class, 'store'])->name('payment.store');
     Route::get('/profil', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profil', [ProfileController::class, 'update'])->name('profile.update');
+    Route::get('/check-status', [BookingController::class, 'checkUserStatus'])->name('check-status');
 });
 
 // ─── DASHBOARD ADMIN ───────────────────────────────────────
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [\App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard/check-new', [\App\Http\Controllers\Admin\DashboardController::class, 'checkNew'])->name('dashboard.check-new');
 
     // Kamar
     Route::resource('kamar', \App\Http\Controllers\Admin\RoomController::class);

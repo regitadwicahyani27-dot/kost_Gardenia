@@ -170,6 +170,10 @@
 
             {{-- Form Catat Pembayaran Offline --}}
             @if(in_array($booking->status, ['confirmed', 'active']))
+            @php
+                $totalVerifiedShow = $booking->payments->where('status', 'verified')->sum('amount');
+                $sisaAmountShow = max(0, $booking->total_price - $totalVerifiedShow);
+            @endphp
             <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                 <div class="px-6 py-4 border-b border-gray-100 bg-green-50">
                     <h3 class="font-semibold text-green-800">💰 Catat Pembayaran Offline</h3>
@@ -185,13 +189,13 @@
                             </label>
                             <input type="number"
                                    name="amount"
-                                   value="{{ $booking->total_price - $booking->dp_amount }}"
+                                   value="{{ $sisaAmountShow }}"
                                    required
                                    min="0"
                                    step="1"
                                    class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500 @error('amount') border-red-400 @enderror"
                                    placeholder="Masukkan nominal">
-                            <p class="text-xs text-gray-400 mt-1">Default: sisa pembayaran (Rp {{ number_format($booking->total_price - $booking->dp_amount, 0, ',', '.') }})</p>
+                            <p class="text-xs text-gray-400 mt-1">Default: sisa pembayaran (Rp {{ number_format($sisaAmountShow, 0, ',', '.') }})</p>
                             @error('amount') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                         </div>
 

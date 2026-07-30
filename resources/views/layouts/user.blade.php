@@ -97,6 +97,48 @@
             setTimeout(() => { t.style.animation='toastOut 0.25s ease forwards'; setTimeout(()=>t.remove(),250); }, 3000);
         }
     </script>
+    @auth
+    @if(!auth()->user()->isAdmin())
+    <script>
+        (function() {
+            let initialPaymentUpdate = null;
+            let initialBookingUpdate = null;
+
+            async function checkStatus() {
+                try {
+                    const res = await fetch("{{ route('user.check-status') }}", {
+                        headers: { 'Accept': 'application/json' }
+                    });
+                    if (!res.ok) return;
+                    const data = await res.json();
+                    if (!data.logged_in) return;
+
+                    if (initialPaymentUpdate === null) {
+                        initialPaymentUpdate = data.last_payment_updated;
+                        initialBookingUpdate = data.last_booking_updated;
+                        return;
+                    }
+
+                    if (data.last_payment_updated > initialPaymentUpdate || data.last_booking_updated > initialBookingUpdate) {
+                        initialPaymentUpdate = data.last_payment_updated;
+                        initialBookingUpdate = data.last_booking_updated;
+
+                        if (typeof showToast === 'function') {
+                            showToast('Status pembayaran / booking Anda telah diperbarui oleh Admin!', 'success');
+                        }
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1200);
+                    }
+                } catch(e) {}
+            }
+
+            checkStatus();
+            setInterval(checkStatus, 10000);
+        })();
+    </script>
+    @endif
+    @endauth
     @stack('scripts')
 </body>
 </html>

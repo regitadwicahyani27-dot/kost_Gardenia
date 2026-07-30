@@ -80,7 +80,7 @@
             </template>
 
             {{-- Sisa Pembayaran (hanya tampil jika belum lunas) --}}
-            <template x-if="['confirmed', 'active'].includes($store.bookingModal.booking?.status)">
+            <template x-if="['confirmed', 'active'].includes($store.bookingModal.booking?.status) && ($store.bookingModal.booking?.sisaRaw > 0 || $store.bookingModal.booking?.sisaRaw === undefined)">
                 <div class="bg-amber-50 border border-amber-200 rounded-xl p-4">
                     <p class="text-xs font-semibold text-amber-800">Sisa Pembayaran</p>
                     <p class="text-lg font-bold text-amber-700">Rp <span x-text="$store.bookingModal.booking?.sisa"></span></p>
@@ -88,8 +88,8 @@
                 </div>
             </template>
 
-            {{-- Status Lunas (tampil jika sudah completed) --}}
-            <template x-if="$store.bookingModal.booking?.status === 'completed'">
+            {{-- Status Lunas (tampil jika sudah completed atau sisa 0) --}}
+            <template x-if="$store.bookingModal.booking?.status === 'completed' || ($store.bookingModal.booking?.status !== 'cancelled' && $store.bookingModal.booking?.sisaRaw === 0)">
                 <div class="bg-green-50 border border-green-200 rounded-xl p-4">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
