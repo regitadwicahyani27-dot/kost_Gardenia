@@ -56,31 +56,106 @@
                 </div>
             </div>
 
-            {{-- Sisa Pembayaran --}}
+            {{-- DEBUG INFO (TEMPORARY - HAPUS SETELAH TESTING) --}}
+            <div class="bg-red-50 border-2 border-red-500 rounded-xl p-4 mb-4">
+                <p class="font-bold text-red-800 mb-2">🔍 DEBUG INFO - FILE VERSION: STAGING-V3</p>
+                <p class="text-sm text-red-700">Status Booking: <strong>{{ $booking->status }}</strong></p>
+                <p class="text-sm text-red-700">Apakah status = 'completed'? <strong>{{ $booking->status === 'completed' ? 'YA' : 'TIDAK' }}</strong></p>
+                <p class="text-sm text-red-700">in_array confirmed/active? <strong>{{ in_array($booking->status, ['confirmed', 'active']) ? 'YA' : 'TIDAK' }}</strong></p>
+                <p class="text-sm text-red-700">Total Payments: <strong>{{ $booking->payments->count() }}</strong></p>
+                <p class="text-xs text-red-600 mt-2">Jika kotak ini tidak muncul, berarti file tidak terupdate!</p>
+            </div>
+
+            {{-- Sisa Pembayaran (hanya tampil jika belum lunas) --}}
+            @if(in_array($booking->status, ['confirmed', 'active']))
             <div class="bg-amber-50 border border-amber-200 rounded-xl p-4">
                 <p class="text-xs font-semibold text-amber-800">Sisa Pembayaran</p>
                 <p class="text-lg font-bold text-amber-700">Rp {{ number_format($booking->total_price - $booking->dp_amount, 0, ',', '.') }}</p>
                 <p class="text-xs text-amber-600 mt-1">Dibayar saat check-in di lokasi</p>
             </div>
+            @endif
+
+            {{-- Status Lunas (tampil jika sudah completed) --}}
+            @if($booking->status === 'completed')
+            <div class="bg-green-50 border border-green-200 rounded-xl p-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold text-green-800">Pembayaran Lunas</p>
+                        <p class="text-xs text-green-600 mt-0.5">Semua pembayaran telah diselesaikan</p>
+                    </div>
+                </div>
+            </div>
+            @endif
 
             {{-- Riwayat Pembayaran --}}
             @if($booking->payments->count())
             <div>
                 <h3 class="font-semibold text-gray-900 mb-3">Riwayat Pembayaran</h3>
-                <div class="space-y-2">
+                <div class="space-y-3">
                     @foreach($booking->payments as $payment)
                     @php
                         $payStatusColors = ['pending' => 'bg-amber-100 text-amber-700', 'verified' => 'bg-green-100 text-green-700', 'rejected' => 'bg-red-100 text-red-700'];
                         $payStatusLabels = ['pending' => 'Menunggu', 'verified' => 'Terverifikasi', 'rejected' => 'Ditolak'];
+                        $payTypeLabels = ['dp' => 'Uang Muka (DP)', 'monthly' => 'Bulanan', 'full' => 'Penuh'];
                     @endphp
-                    <div class="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-3">
-                        <div>
-                            <p class="text-sm font-medium text-gray-900">{{ strtoupper($payment->payment_type) }} · {{ strtoupper($payment->payment_method) }}</p>
-                            <p class="text-xs text-gray-400">{{ $payment->created_at->format('d M Y H:i') }}</p>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-sm font-bold text-gray-900">Rp {{ number_format($payment->amount, 0, ',', '.') }}</p>
-                            <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full {{ $payStatusColors[$payment->status] ?? '' }}">{{ $payStatusLabels[$payment->status] ?? $payment->status }}</span>
+                    <div class="flex items-start gap-3 bg-gray-50 rounded-xl p-3 hover:bg-gray-100 transition">
+                        {{-- Thumbnail / Ikon Metode Pembayaran --}}
+                        @if($payment->payment_method === 'cash')
+                            {{-- Kotak Hijau Pastel untuk Tunai/Cash --}}
+                            <div class="w-16 h-16 rounded-xl bg-gradient-to-br from-green-100 to-emerald-100 flex items-center justify-center flex-shrink-0 shadow-sm border border-green-200">
+                                <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                </svg>
+                            </div>
+                        @else
+                            {{-- Foto Bukti Transfer untuk Metode Online --}}
+                            @if($payment->proof_path)
+                                <img src="{{ asset('storage/' . $payment->proof_path) }}" 
+                                     alt="Bukti Transfer" 
+                                     class="w-16 h-16 rounded-xl object-cover flex-shrink-0 cursor-pointer hover:opacity-80 transition border border-gray-200 hover:border-[#2F4538]"
+                                     onclick="window.open('{{ asset('storage/' . $payment->proof_path) }}', '_blank')" />
+                            @else
+                                <div class="w-16 h-16 rounded-xl bg-gray-200 flex items-center justify-center flex-shrink-0 border border-gray-300">
+                                    <svg class="w-7 h-7 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                                    </svg>
+                                </div>
+                            @endif
+                        @endif
+
+                        {{-- Info Pembayaran --}}
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-start justify-between gap-2 mb-1">
+                                <div>
+                                    <p class="text-sm font-semibold text-gray-900">
+                                        {{ $payTypeLabels[$payment->payment_type] ?? strtoupper($payment->payment_type) }}
+                                    </p>
+                                    <p class="text-xs text-gray-500 mt-0.5">
+                                        @if($payment->payment_method === 'cash')
+                                            <span class="inline-flex items-center gap-1">
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                                </svg>
+                                                Tunai (Offline)
+                                            </span>
+                                        @else
+                                            {{ strtoupper($payment->payment_method) }}
+                                        @endif
+                                    </p>
+                                    <p class="text-xs text-gray-400 mt-1">{{ $payment->created_at->format('d M Y H:i') }}</p>
+                                </div>
+                                <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap {{ $payStatusColors[$payment->status] ?? '' }}">
+                                    {{ $payStatusLabels[$payment->status] ?? $payment->status }}
+                                </span>
+                            </div>
+                            <p class="text-base font-bold text-[#2F4538]">
+                                Rp {{ number_format($payment->amount, 0, ',', '.') }}
+                            </p>
                         </div>
                     </div>
                     @endforeach

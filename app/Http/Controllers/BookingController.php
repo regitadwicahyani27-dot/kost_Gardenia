@@ -29,10 +29,11 @@ class BookingController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'room_id' => 'required|exists:rooms,id',
-            'check_in_date' => 'required|date|after_or_equal:today',
+            'room_id'        => 'required|exists:rooms,id',
+            'check_in_date'  => 'required|date|after_or_equal:today',
             'payment_method' => 'required|in:qris,dana,ovo,bca',
-            'ewallet_phone' => ['required_if:payment_method,dana,ovo', 'nullable', 'string', 'max:20'],
+            'ewallet_phone'  => ['required_if:payment_method,dana,ovo', 'nullable', 'string', 'max:20'],
+            'proof'          => 'required|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
         $room = Room::findOrFail($request->room_id);
@@ -72,18 +73,21 @@ class BookingController extends Controller
             $ewalletNote = 'No. ' . strtoupper($request->payment_method) . ': ' . $request->ewallet_phone;
         }
 
+        // Simpan bukti transfer (wajib diupload saat booking)
+        $proofPath = $request->file('proof')->store('payments', 'public');
+
         // Buat pembayaran DP dengan status PENDING (menunggu verifikasi admin)
         Payment::create([
-            'booking_id' => $booking->id,
-            'user_id' => auth()->id(),
-            'amount' => $dpAmount,
+            'booking_id'     => $booking->id,
+            'user_id'        => auth()->id(),
+            'amount'         => $dpAmount,
             'payment_method' => $request->payment_method,
-            'payment_type' => 'dp',
-            'proof_path' => null,
-            'status' => 'pending',
-            'verified_at' => null,
-            'verified_by' => null,
-            'notes' => $ewalletNote,
+            'payment_type'   => 'dp',
+            'proof_path'     => $proofPath,
+            'status'         => 'pending', // Tetap pending, menunggu verifikasi admin
+            'verified_at'    => null,
+            'verified_by'    => null,
+            'notes'          => $ewalletNote,
         ]);
 
         // Kamar belum di-set unavailable — menunggu admin verifikasi pembayaran

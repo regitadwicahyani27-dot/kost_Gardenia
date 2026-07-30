@@ -1,4 +1,6 @@
-# Dokumentasi Teknis — Kos Putri Gardenia
+# Dokumentasi Teknis — Sistem Manajemen Kos Putri Gardenia
+
+> Dibuat otomatis dari analisis codebase. Versi terakhir: 22 Juli 2026.
 
 ---
 
@@ -10,12 +12,12 @@
 4. [Arsitektur & Alur Data](#4-arsitektur--alur-data)
 5. [Skema Database](#5-skema-database)
 6. [Daftar Halaman & Navigasi (per Role)](#6-daftar-halaman--navigasi-per-role)
-7. [Daftar API Endpoint](#7-daftar-api-endpoint)
+7. [Daftar API Endpoint / Route](#7-daftar-api-endpoint--route)
 8. [Fitur & Logika Bisnis Utama](#8-fitur--logika-bisnis-utama)
 9. [Integrasi Eksternal](#9-integrasi-eksternal)
 10. [Dependency & Package](#10-dependency--package)
 11. [Cara Menjalankan Project](#11-cara-menjalankan-project)
-12. [Kendala/Catatan Teknis](#12-kendalacatatan-teknis)
+12. [Kendala / Catatan Teknis](#12-kendala--catatan-teknis)
 
 ---
 
@@ -23,207 +25,198 @@
 
 ### Identitas
 
-| Aspek | Keterangan |
-|---|---|
+| Atribut | Detail |
+|---------|--------|
 | **Nama Project** | Kos Putri Gardenia |
-| **Tujuan** | Sistem informasi dan booking kamar kos putri secara online |
-| **Target Pengguna** | Publik (pengunjung tanpa login), User (calon penghuni/penghuni terdaftar), Admin (pengelola kos) |
-| **Nama Kode** | `gardenia-kosla122` |
+| **Nama Repositori** | `kost_Gardenia` |
+| **Tujuan Utama** | Sistem manajemen kos berbasis web: pengelolaan kamar, booking, dan pembayaran uang muka (DP) secara online |
+| **Target Pengguna** | **Publik** (calon penghuni yang belum login), **User** (penghuni terdaftar), **Admin** (pengelola kos) |
 
-### Deskripsi Singkat Alur Bisnis Utama
+### Deskripsi Singkat
 
-1. **Pengunjung** mengakses halaman publik untuk melihat daftar kamar yang tersedia, detail kamar beserta fasilitasnya, halaman tentang, dan testimoni penghuni.
-2. **Pengunjung mendaftar** akun melalui modal popup registrasi (bukan halaman terpisah) dengan mengisi data pribadi (nama, tanggal lahir, no HP, email, alamat).
-3. **User yang sudah login** dapat memilih kamar, lalu membuat **booking** dengan memilih tanggal check-in dan metode pembayaran (QRIS, DANA, OVO, atau BCA).
-4. Saat booking dibuat, sistem otomatis membuat **pembayaran DP** sebesar Rp250.000 dengan status `pending`.
-5. **Admin** memverifikasi pembayaran DP melalui dashboard. Jika diverifikasi:
-   - Status pembayaran → `verified`
-   - Status booking → `confirmed`
-   - Kamar ditandai tidak tersedia (`is_available = false`)
-6. Jika admin **menolak** pembayaran, booking otomatis dibatalkan.
-7. Admin dapat mengubah status booking ke `active`, `completed`, atau `cancelled`. Saat booking `cancelled` atau `completed`, kamar dibebaskan kembali menjadi tersedia.
-8. User dapat melihat riwayat booking dan detail pembayaran melalui dashboard.
-9. **Testimoni** dikelola langsung oleh admin (bukan diajukan oleh user).
+Project ini adalah aplikasi web manajemen kos (rumah kos) yang dibangun dengan Laravel 12. Sistem ini mengotomatiskan proses mulai dari promosi kamar ke publik hingga konfirmasi pembayaran oleh admin.
+
+### Alur Bisnis Utama (Booking Kamar)
+
+```
+[Publik] Lihat kamar tersedia di halaman /kamar
+     ↓
+[Publik] Klik detail kamar → lihat foto, fasilitas, harga
+     ↓
+[User] Login / Register (jika belum punya akun)
+     ↓
+[User] Klik "Pesan Kamar" → isi form booking
+       - Pilih tanggal check-in
+       - Pilih metode pembayaran DP (QRIS / Dana / OVO / BCA)
+     ↓
+[System] Booking dibuat dengan status "pending"
+         Pembayaran DP Rp 250.000 dibuat dengan status "pending"
+         Kamar BELUM dikunci (menunggu verifikasi admin)
+     ↓
+[User] Upload bukti transfer pembayaran DP
+     ↓
+[Admin] Menerima notifikasi pembayaran pending di dashboard
+        → Verifikasi bukti transfer
+     ↓
+[Admin] APPROVE → Status booking → "confirmed", kamar → tidak tersedia
+        REJECT  → Status booking → "cancelled", kamar tetap tersedia
+     ↓
+[Admin] Mengubah status booking secara manual:
+        pending → confirmed → active → completed
+        (atau cancelled kapan saja)
+     ↓
+[Admin] Jika booking completed/cancelled → kamar otomatis tersedia lagi
+```
 
 ---
 
 ## 2. Tech Stack
 
-### Bahasa Pemrograman & Framework
+### Bahasa Pemrograman
 
-| Komponen | Teknologi | Versi |
-|---|---|---|
-| Bahasa Backend | PHP | ^8.2 (platform 8.3.0) |
-| Framework Backend | Laravel | ^12.0 |
-| Bahasa Frontend | HTML + Blade Templating, JavaScript | - |
-| CSS Framework | TailwindCSS | ^3.1.0 |
-| JS Reactivity | Alpine.js | ^3.4.2 |
-| Build Tool | Vite | ^6.0.11 |
-| HTTP Client (JS) | Axios | ^1.7.4 |
+| Bahasa | Versi | Peran |
+|--------|-------|-------|
+| PHP | ^8.2 (target platform 8.3.0) | Backend |
+| JavaScript | ES2020+ | Frontend interactivity |
+| HTML / Blade | — | Template engine |
+| CSS | — | Styling (via Tailwind) |
+
+### Framework
+
+| Framework | Versi | Peran |
+|-----------|-------|-------|
+| Laravel | ^12.0 | Backend MVC framework |
+| Laravel Breeze | ^2.4 | Scaffolding autentikasi (login, register, reset password) |
+| Tailwind CSS | ^3.1.0 | Utility-first CSS framework |
+| Alpine.js | ^3.4.2 | JavaScript ringan untuk reaktivitas UI |
+| Vite | ^6.0.11 | Build tool dan dev server frontend |
 
 ### Database
 
-| Aspek | Keterangan |
-|---|---|
-| **Lokal (development)** | MySQL (via Laragon) — database `gardenia_kos` |
-| **Default .env.example** | SQLite |
-| **Hosting (production)** | MySQL di InfinityFree (`sql307.infinityfree.com`) |
+| Komponen | Detail |
+|----------|--------|
+| **Lokal** | SQLite (file `database/database.sqlite`) |
+| **Production** | MySQL (InfinityFree: `sql306.infinityfree.com` atau sejenisnya) |
 
-### Library/Package Penting
+### Library / Package Penting
 
-| Package | Fungsi |
-|---|---|
-| `laravel/breeze` | Scaffolding autentikasi (login, register, reset password, email verification) |
-| `laravel/tinker` | REPL interaktif untuk debugging |
-| `laravel/sail` | Docker development environment (tersedia di dev-dependencies) |
-| `@tailwindcss/forms` | Plugin TailwindCSS untuk styling form elements |
-| `laravel-vite-plugin` | Integrasi Vite dengan Laravel |
-| `alpinejs` | Framework JavaScript ringan untuk interaktivitas frontend |
-| `axios` | HTTP client untuk AJAX requests |
+| Package | Versi | Fungsi |
+|---------|-------|--------|
+| `laravel/framework` | ^12.0 | Core framework |
+| `laravel/breeze` | ^2.4 (dev) | Starter kit autentikasi |
+| `laravel/tinker` | ^2.10.1 | REPL interaktif untuk debugging |
+| `alpinejs` | ^3.4.2 | Reaktivitas UI ringan (modal, toggle, dsb) |
+| `axios` | ^1.7.4 | HTTP client untuk request AJAX dari JS |
+| `@tailwindcss/forms` | ^0.5.2 | Reset styling form untuk Tailwind |
+| `laravel-vite-plugin` | ^1.2.0 | Integrasi Vite dengan Laravel |
+| `fakerphp/faker` | ^1.23 (dev) | Generator data palsu untuk testing/seeding |
+| `phpunit/phpunit` | ^11.5.3 (dev) | Framework unit testing |
 
-### Tools Deployment/Hosting
+### Tools Deployment / Hosting
 
-| Tool | Keterangan |
-|---|---|
-| **Laragon** | Local development server (Windows) |
-| **InfinityFree** | Hosting production (konfigurasi ditemukan di `.env_hosting`) |
-| **Laravel Sail** | Docker environment (tersedia sebagai dev-dependency, opsional) |
-| **Vite** | Build tool untuk asset bundling (CSS/JS) |
+| Tool | Fungsi |
+|------|--------|
+| **InfinityFree** | Shared hosting gratis untuk production |
+| **FileZilla (FTP)** | Upload file ke server via FTP (`ftpupload.net:21`) |
+| **phpMyAdmin** | Import database SQL ke server production |
+| `.htaccess` (root) | Redirect semua request dari root `htdocs/` ke subfolder `public/` |
 
 ---
 
 ## 3. Struktur Folder & File
 
-### Tree Struktur (Maks 3 Level)
+### Pohon Direktori (Maks. 3 Level)
 
 ```
 gardenia-kosla122/
-├── app/
+├── app/                          # Kode aplikasi Laravel
 │   ├── Http/
-│   │   ├── Controllers/
-│   │   │   ├── Admin/              # Controller khusus admin
-│   │   │   ├── Auth/               # Controller autentikasi (Breeze)
-│   │   │   ├── BookingController.php
-│   │   │   ├── HomeController.php
-│   │   │   ├── PaymentController.php
-│   │   │   ├── ProfileController.php
-│   │   │   └── RoomController.php
-│   │   ├── Middleware/
-│   │   │   └── AdminMiddleware.php  # Middleware cek role admin
-│   │   └── Requests/
-│   │       ├── Auth/
-│   │       │   └── LoginRequest.php
-│   │       └── ProfileUpdateRequest.php
-│   ├── Models/                     # Eloquent Models
-│   │   ├── Booking.php
-│   │   ├── Facility.php
-│   │   ├── Payment.php
-│   │   ├── Room.php
-│   │   ├── RoomPhoto.php
-│   │   ├── Testimonial.php
-│   │   └── User.php
-│   ├── Providers/
-│   │   └── AppServiceProvider.php
-│   └── Support/
-│       ├── Icons.php               # Helper SVG icons
-│       └── RoomFacilities.php      # Daftar fasilitas standar kamar
-├── bootstrap/                      # Bootstrap framework Laravel
-├── config/                         # File konfigurasi Laravel
-│   ├── app.php
-│   ├── auth.php
-│   ├── database.php
-│   ├── filesystems.php
-│   ├── mail.php
-│   ├── session.php
-│   └── ...
+│   │   ├── Controllers/          # Semua controller
+│   │   │   ├── Admin/            # Controller khusus admin
+│   │   │   └── Auth/             # Controller autentikasi (Breeze)
+│   │   ├── Middleware/           # Middleware (AdminMiddleware)
+│   │   └── Requests/             # Form Request validation
+│   ├── Models/                   # Eloquent ORM models
+│   ├── Providers/                # Service providers (AppServiceProvider)
+│   └── Support/                  # Kelas helper/utility
+│       ├── Icons.php             # Koleksi ikon SVG inline
+│       └── RoomFacilities.php    # Daftar fasilitas kamar statis
+│
+├── bootstrap/                    # Bootstrap framework dan cache
+├── config/                       # Konfigurasi Laravel
 ├── database/
-│   ├── factories/                  # Model factories (kosong)
-│   ├── migrations/                 # 15 file migrasi database
-│   ├── seeders/
-│   │   ├── AdminSeeder.php         # Seeder akun admin default
-│   │   └── DatabaseSeeder.php
-│   └── database.sqlite             # File SQLite (default)
-├── public/
-│   ├── build/                      # Compiled Vite assets
-│   ├── images/                     # Gambar statis
-│   ├── storage -> ../storage/app/public  # Symlink storage
-│   ├── index.php                   # Entry point aplikasi
-│   └── .htaccess
+│   ├── migrations/               # Migrasi skema database (14 file)
+│   ├── seeders/                  # Seeder (AdminSeeder, DatabaseSeeder)
+│   ├── factories/                # Factory untuk data dummy
+│   ├── database.sqlite           # File database SQLite lokal
+│   └── gardenia_kos.sql          # Dump SQL untuk production (MySQL)
+│
+├── deploy-infinityfree/          # Aset dan panduan deployment
+│   ├── .htaccess.root            # Template .htaccess untuk root hosting
+│   ├── PANDUAN-DEPLOY.md         # Panduan deploy step-by-step
+│   └── _staging/                 # Staging build artifacts
+│
+├── public/                       # Webroot yang diakses browser
+│   ├── index.php                 # Entry point Laravel
+│   ├── .htaccess                 # URL rewriting
+│   ├── build/                    # Hasil build Vite (CSS/JS compiled)
+│   └── images/                   # Gambar statis
+│
 ├── resources/
-│   ├── css/
-│   │   └── app.css                 # Entry point CSS (Tailwind directives)
-│   ├── js/
-│   │   ├── app.js                  # Entry point JS (Alpine.js)
-│   │   └── bootstrap.js            # Axios setup
-│   └── views/
-│       ├── admin/                  # View halaman admin
-│       │   ├── dashboard.blade.php
-│       │   ├── bookings/
-│       │   ├── payments/
-│       │   ├── rooms/
-│       │   └── testimonials/
-│       ├── components/             # Blade components
-│       ├── layouts/                # Layout templates
-│       │   ├── admin.blade.php
-│       │   ├── app.blade.php       # Layout publik
-│       │   └── user.blade.php
-│       ├── partials/               # Partial views
-│       ├── profile/
-│       ├── rooms/                  # Halaman kamar publik
-│       ├── user/                   # View halaman user
-│       │   ├── dashboard.blade.php
-│       │   ├── booking/
-│       │   └── rooms/
-│       ├── home.blade.php          # Halaman beranda
-│       └── tentang.blade.php       # Halaman tentang
+│   ├── css/app.css               # Entry point CSS (Tailwind directives)
+│   ├── js/app.js                 # Entry point JavaScript
+│   └── views/                    # Template Blade
+│       ├── layouts/              # Layout utama (app, user, admin)
+│       ├── admin/                # Halaman panel admin
+│       ├── user/                 # Halaman panel user
+│       ├── rooms/                # Halaman kamar publik
+│       ├── profile/              # Halaman edit profil
+│       ├── partials/             # Komponen parsial
+│       ├── components/           # Blade components reusable
+│       ├── home.blade.php        # Halaman beranda publik
+│       └── tentang.blade.php     # Halaman tentang kami
+│
 ├── routes/
-│   ├── web.php                     # Route utama (publik, user, admin)
-│   ├── auth.php                    # Route autentikasi (Breeze)
-│   └── console.php
-├── storage/                        # File storage (uploads, logs, cache)
-├── tests/                          # Test files
-├── .env.example                    # Template environment variables
-├── .env_hosting                    # Config khusus hosting InfinityFree
-├── composer.json                   # PHP dependencies
-├── package.json                    # Node.js dependencies
-├── tailwind.config.js              # Konfigurasi TailwindCSS
-├── vite.config.js                  # Konfigurasi Vite
-└── phpunit.xml                     # Konfigurasi PHPUnit
+│   ├── web.php                   # Definisi semua route web
+│   ├── auth.php                  # Route autentikasi Breeze
+│   └── console.php               # Route command Artisan
+│
+├── storage/                      # Storage: logs, cache, file upload
+├── tests/                        # Unit dan feature tests
+├── vendor/                       # Dependencies Composer (tidak di-commit)
+├── node_modules/                 # Dependencies NPM (tidak di-commit)
+├── .env                          # Environment variables aktif (tidak di-commit)
+├── .env.example                  # Template environment variables
+├── .env_hosting                  # Template env untuk production hosting
+├── composer.json                 # Definisi dependencies PHP
+├── package.json                  # Definisi dependencies JavaScript
+├── tailwind.config.js            # Konfigurasi Tailwind CSS
+├── vite.config.js                # Konfigurasi Vite build tool
+├── artisan                       # CLI Laravel
+└── DOCUMENTATION.md              # File ini
 ```
 
-### File Konfigurasi Penting & Variabel Environment
+### File Konfigurasi Penting & Environment Variables
 
-| File | Fungsi |
-|---|---|
-| `.env.example` | Template variabel environment untuk setup lokal |
-| `.env_hosting` | Variabel environment untuk deployment ke InfinityFree |
-| `composer.json` | Definisi dependency PHP |
-| `package.json` | Definisi dependency Node.js |
-| `tailwind.config.js` | Kustomisasi TailwindCSS (font: Figtree) |
-| `vite.config.js` | Konfigurasi build tool Vite |
-| `phpunit.xml` | Konfigurasi testing |
-
-### Variabel Environment yang Dibutuhkan
-
-| Variabel | Deskripsi |
-|---|---|
-| `APP_NAME` | Nama aplikasi |
-| `APP_ENV` | Environment (`local` / `production`) |
-| `APP_KEY` | Application encryption key |
-| `APP_DEBUG` | Mode debug (`true` / `false`) |
-| `APP_URL` | URL dasar aplikasi |
-| `DB_CONNECTION` | Driver database (`mysql` / `sqlite`) |
-| `DB_HOST` | Host database |
-| `DB_PORT` | Port database |
-| `DB_DATABASE` | Nama database |
-| `DB_USERNAME` | Username database |
-| `DB_PASSWORD` | Password database |
-| `SESSION_DRIVER` | Driver session (`file` / `database`) |
-| `FILESYSTEM_DISK` | Disk penyimpanan file (`local`) |
-| `QUEUE_CONNECTION` | Driver queue (`database`) |
-| `CACHE_STORE` | Driver cache (`database`) |
-| `MAIL_MAILER` | Driver email (`log` di development) |
-| `VITE_APP_NAME` | Nama aplikasi untuk frontend |
+| Variabel | Deskripsi | Contoh Nilai |
+|----------|-----------|--------------|
+| `APP_NAME` | Nama aplikasi | `Gardenia Kos` |
+| `APP_ENV` | Environment (local/production) | `local` / `production` |
+| `APP_KEY` | Kunci enkripsi Laravel (wajib generate) | `base64:...` |
+| `APP_DEBUG` | Mode debug | `true` / `false` |
+| `APP_URL` | URL dasar aplikasi | `http://localhost` |
+| `DB_CONNECTION` | Driver database | `sqlite` / `mysql` |
+| `DB_HOST` | Host database (MySQL production) | `sql306.infinityfree.com` |
+| `DB_PORT` | Port database | `3306` |
+| `DB_DATABASE` | Nama database | `if0_xxx_gardenia` |
+| `DB_USERNAME` | Username database | `if0_xxx` |
+| `DB_PASSWORD` | Password database | *(rahasia)* |
+| `SESSION_DRIVER` | Driver session | `database` |
+| `FILESYSTEM_DISK` | Disk penyimpanan file | `local` |
+| `QUEUE_CONNECTION` | Driver queue | `database` |
+| `CACHE_STORE` | Driver cache | `database` |
+| `MAIL_MAILER` | Driver mail | `log` |
+| `MAIL_FROM_ADDRESS` | Alamat pengirim email | `hello@example.com` |
 
 ---
 
@@ -231,326 +224,189 @@ gardenia-kosla122/
 
 ### Pola Arsitektur
 
-Project ini menggunakan pola arsitektur **MVC (Model-View-Controller)** bawaan Laravel:
+Project menggunakan pola **MVC (Model-View-Controller)** bawaan Laravel:
 
-- **Model** (`app/Models/`): Mendefinisikan entitas bisnis dan relasinya (Eloquent ORM)
-- **View** (`resources/views/`): Template Blade untuk rendering halaman HTML
-- **Controller** (`app/Http/Controllers/`): Menangani logika request-response
+- **Model** — Eloquent ORM (`app/Models/`): merepresentasikan entitas data dan hubungan antar tabel
+- **View** — Blade Templates (`resources/views/`): merender HTML yang dikirim ke browser
+- **Controller** — (`app/Http/Controllers/`): menangani request, memanggil model, dan mengembalikan view
+- **Route** — (`routes/web.php`, `routes/auth.php`): memetakan URL ke controller method
 
-Tambahan komponen arsitektur:
-- **Middleware** (`app/Http/Middleware/`): Filter request (autentikasi, otorisasi admin)
-- **Form Request** (`app/Http/Requests/`): Validasi input terpusat
-- **Support** (`app/Support/`): Helper class untuk data statis (fasilitas, ikon)
+Tidak ada REST API murni. Semua komunikasi terjadi via **server-side rendering** dengan sesekali **AJAX (Axios)** untuk fitur booking tanpa page reload.
 
-### Komunikasi Frontend-Backend
+### Cara Frontend Berkomunikasi dengan Backend
 
-| Aspek | Keterangan |
-|---|---|
-| **Metode** | Server-Side Rendering (SSR) dengan Blade templating |
-| **AJAX** | Digunakan untuk proses booking (via Axios + AJAX request) |
-| **Interaktivitas** | Alpine.js untuk komponen interaktif di frontend (modal, dropdown, toggle) |
-| **Asset Bundling** | Vite mengompilasi CSS (Tailwind) dan JS (Alpine.js + Axios) |
+| Mekanisme | Kapan Digunakan |
+|-----------|-----------------|
+| **Form HTML biasa** (POST/PATCH/DELETE) | Sebagian besar operasi CRUD |
+| **AJAX (Axios)** | Submit booking (`POST /user/booking`) → respons JSON untuk modal sukses tanpa reload halaman |
+| **Alpine.js** | Mengelola state UI lokal: toggle dropdown, buka/tutup modal, galeri foto |
 
-Alur request secara umum:
+**Alur AJAX Booking:**
 ```
-Browser → Route (web.php/auth.php)
-       → Middleware (auth, admin)
-       → Controller
-       → Model (Eloquent) ↔ Database
-       → View (Blade) → Response HTML
-```
-
-Untuk AJAX (contoh: booking store):
-```
-Browser (Axios POST) → Route → Controller
-                    → Model → Database
-                    → JSON Response → JavaScript handler
+User klik "Konfirmasi Booking" di form
+    → Axios POST /user/booking (data form)
+    → BookingController::store() diproses di backend
+    → Response JSON: { success, nama, kamar, booking_code, sisa, ... }
+    → Alpine.js menampilkan modal sukses dengan data tersebut
 ```
 
 ### Mekanisme Autentikasi & Otorisasi
 
-| Aspek | Keterangan |
-|---|---|
-| **Paket Auth** | Laravel Breeze (Blade stack) |
-| **Metode Auth** | Session-based authentication |
-| **Session Driver** | File (lokal) / Database (hosting) |
-| **Password Hashing** | Bcrypt (12 rounds) |
-| **Role System** | Kolom `role` di tabel `users` (`user` / `admin`) |
-| **Middleware Admin** | `AdminMiddleware` — mengecek `auth()->user()->isAdmin()` |
-| **Guard** | Default Laravel guard (`web`) |
-
-**Alur Otorisasi:**
-1. Route tanpa middleware → **Publik** (siapa saja bisa akses)
-2. Route dengan middleware `auth` → **User yang sudah login**
-3. Route dengan middleware `['auth', 'admin']` → **Admin saja**
-4. Pengecekan kepemilikan resource dilakukan di controller (mis. `$booking->user_id !== auth()->id()` → `abort(403)`)
-
-**Alur Login/Register:**
-- Registrasi menggunakan modal popup (bukan halaman terpisah). `RegisteredUserController::create()` me-redirect ke home dengan flash session `open_auth=register`.
-- Login juga melalui modal popup di halaman publik.
-- Setelah login, route `/dashboard` otomatis me-redirect berdasarkan role:
-  - Admin → `/admin/dashboard`
-  - User → `/user/dashboard`
+| Komponen | Detail |
+|----------|--------|
+| **Autentikasi** | Laravel Breeze (session-based, bukan token/JWT) |
+| **Session** | Disimpan di tabel `sessions` (database driver) |
+| **Guard** | `web` (default Laravel) |
+| **Middleware Auth** | `auth` — memastikan user sudah login |
+| **Middleware Admin** | `admin` (`AdminMiddleware`) — memastikan user punya `role = 'admin'`, HTTP 403 jika bukan admin |
+| **Role System** | Kolom `role` di tabel `users` (`'user'` atau `'admin'`). Method helper `isAdmin()` di model `User` |
+| **Redirect Post-Login** | Route `/dashboard` mengecek role: admin ke `/admin/dashboard`, user ke `/user/dashboard` |
+| **HTTPS Paksa** | `AppServiceProvider::boot()` memanggil `URL::forceScheme('https')` di non-`local` environment |
 
 ---
 
 ## 5. Skema Database
 
-### Daftar Tabel & Kolom
+### Tabel `users`
 
-#### Tabel `users`
+| Kolom | Tipe | Constraint | Keterangan |
+|-------|------|------------|------------|
+| `id` | BIGINT UNSIGNED | PK, AUTO_INCREMENT | Primary key |
+| `name` | VARCHAR(255) | NOT NULL | Nama lengkap |
+| `email` | VARCHAR(255) | UNIQUE, NOT NULL | Email (untuk login) |
+| `email_verified_at` | TIMESTAMP | NULL | Waktu verifikasi email |
+| `phone` | VARCHAR(255) | NULL | Nomor telepon |
+| `address` | TEXT | NULL | Alamat |
+| `birth_date` | DATE | NULL | Tanggal lahir |
+| `role` | VARCHAR(255) | DEFAULT `'user'` | Role: `'user'` atau `'admin'` |
+| `avatar` | VARCHAR(255) | NULL | Path foto profil (`storage/avatars/`) |
+| `password` | VARCHAR(255) | NOT NULL | Password (bcrypt hash) |
+| `remember_token` | VARCHAR(100) | NULL | Token "ingat saya" |
+| `created_at` | TIMESTAMP | NULL | — |
+| `updated_at` | TIMESTAMP | NULL | — |
 
-| Kolom | Tipe Data | Constraint |
-|---|---|---|
-| `id` | bigint (unsigned) | PRIMARY KEY, AUTO_INCREMENT |
-| `name` | varchar(255) | NOT NULL |
-| `email` | varchar(255) | NOT NULL, UNIQUE |
-| `phone` | varchar(255) | NULLABLE |
-| `address` | text | NULLABLE |
-| `birth_date` | date | NULLABLE |
-| `role` | varchar(255) | DEFAULT 'user' |
-| `avatar` | varchar(255) | NULLABLE |
-| `email_verified_at` | timestamp | NULLABLE |
-| `password` | varchar(255) | NOT NULL |
-| `remember_token` | varchar(100) | NULLABLE |
-| `created_at` | timestamp | NULLABLE |
-| `updated_at` | timestamp | NULLABLE |
+### Tabel `rooms`
 
-#### Tabel `facilities`
+| Kolom | Tipe | Constraint | Keterangan |
+|-------|------|------------|------------|
+| `id` | BIGINT UNSIGNED | PK | — |
+| `name` | VARCHAR(255) | NOT NULL | Nama kamar (mis. "Kamar A1") |
+| `type` | ENUM | NOT NULL, DEFAULT `'standard'` | `standard`, `deluxe`, `vip` |
+| `price` | DECIMAL(15,2) | NOT NULL, DEFAULT 0 | Harga sewa per bulan |
+| `description` | TEXT | NULL | Deskripsi kamar |
+| `is_available` | BOOLEAN | DEFAULT `true` | Status ketersediaan |
+| `floor` | INTEGER | DEFAULT `1` | Lantai (1 atau 2) |
+| `created_at` | TIMESTAMP | NULL | — |
+| `updated_at` | TIMESTAMP | NULL | — |
 
-| Kolom | Tipe Data | Constraint |
-|---|---|---|
-| `id` | bigint (unsigned) | PRIMARY KEY, AUTO_INCREMENT |
-| `name` | varchar(255) | NOT NULL |
-| `icon` | varchar(255) | NULLABLE |
-| `created_at` | timestamp | NULLABLE |
-| `updated_at` | timestamp | NULLABLE |
+### Tabel `room_photos`
 
-#### Tabel `rooms`
+| Kolom | Tipe | Constraint | Keterangan |
+|-------|------|------------|------------|
+| `id` | BIGINT UNSIGNED | PK | — |
+| `room_id` | BIGINT UNSIGNED | FK → `rooms.id` CASCADE | Kamar pemilik foto |
+| `photo_path` | VARCHAR(255) | NOT NULL | Path file foto (`storage/rooms/`) |
+| `is_primary` | BOOLEAN | DEFAULT `false` | Foto utama kamar |
+| `created_at` | TIMESTAMP | NULL | — |
+| `updated_at` | TIMESTAMP | NULL | — |
 
-| Kolom | Tipe Data | Constraint |
-|---|---|---|
-| `id` | bigint (unsigned) | PRIMARY KEY, AUTO_INCREMENT |
-| `name` | varchar(255) | NOT NULL |
-| `type` | enum('standard','deluxe','vip') | DEFAULT 'standard' |
-| `price` | decimal(15,2) | DEFAULT 0 |
-| `description` | text | NULLABLE |
-| `is_available` | boolean | DEFAULT true |
-| `floor` | integer | DEFAULT 1 |
-| `created_at` | timestamp | NULLABLE |
-| `updated_at` | timestamp | NULLABLE |
+### Tabel `facilities`
 
-#### Tabel `room_photos`
+| Kolom | Tipe | Constraint | Keterangan |
+|-------|------|------------|------------|
+| `id` | BIGINT UNSIGNED | PK | — |
+| `name` | VARCHAR(255) | NOT NULL | Nama fasilitas (mis. "AC") |
+| `icon` | VARCHAR(255) | NULL | Nama/kode ikon |
+| `created_at` | TIMESTAMP | NULL | — |
+| `updated_at` | TIMESTAMP | NULL | — |
 
-| Kolom | Tipe Data | Constraint |
-|---|---|---|
-| `id` | bigint (unsigned) | PRIMARY KEY, AUTO_INCREMENT |
-| `room_id` | bigint (unsigned) | FOREIGN KEY → rooms(id) ON DELETE CASCADE |
-| `photo_path` | varchar(255) | NOT NULL |
-| `is_primary` | boolean | DEFAULT false |
-| `created_at` | timestamp | NULLABLE |
-| `updated_at` | timestamp | NULLABLE |
+### Tabel `room_facility` *(Pivot Many-to-Many)*
 
-#### Tabel `room_facility` (Pivot)
+| Kolom | Tipe | Constraint | Keterangan |
+|-------|------|------------|------------|
+| `room_id` | BIGINT UNSIGNED | FK → `rooms.id` CASCADE | — |
+| `facility_id` | BIGINT UNSIGNED | FK → `facilities.id` CASCADE | — |
+| — | — | PRIMARY KEY (`room_id`, `facility_id`) | Kunci komposit |
 
-| Kolom | Tipe Data | Constraint |
-|---|---|---|
-| `room_id` | bigint (unsigned) | FOREIGN KEY → rooms(id) ON DELETE CASCADE |
-| `facility_id` | bigint (unsigned) | FOREIGN KEY → facilities(id) ON DELETE CASCADE |
-| — | — | PRIMARY KEY (room_id, facility_id) |
+### Tabel `bookings`
 
-#### Tabel `bookings`
+| Kolom | Tipe | Constraint | Keterangan |
+|-------|------|------------|------------|
+| `id` | BIGINT UNSIGNED | PK | — |
+| `user_id` | BIGINT UNSIGNED | FK → `users.id` CASCADE | Penyewa |
+| `room_id` | BIGINT UNSIGNED | FK → `rooms.id` CASCADE | Kamar yang dipesan |
+| `booking_code` | VARCHAR(255) | UNIQUE | Kode unik booking (`GDN-XXXXXXXX`) |
+| `check_in_date` | DATE | NOT NULL | Tanggal masuk |
+| `duration_months` | INTEGER | DEFAULT `1` | Durasi sewa (bulan) |
+| `total_price` | DECIMAL(15,2) | NOT NULL, DEFAULT 0 | Total harga sewa |
+| `dp_amount` | DECIMAL(15,2) | DEFAULT 250000 | Jumlah uang muka |
+| `status` | ENUM | DEFAULT `'pending'` | `pending`, `confirmed`, `active`, `cancelled`, `completed` |
+| `notes` | TEXT | NULL | Catatan tambahan |
+| `cancelled_reason` | TEXT | NULL | Alasan pembatalan |
+| `cancelled_by` | VARCHAR(255) | NULL | `'user'`, `'admin'`, `'system'` |
+| `created_at` | TIMESTAMP | NULL | — |
+| `updated_at` | TIMESTAMP | NULL | — |
 
-| Kolom | Tipe Data | Constraint |
-|---|---|---|
-| `id` | bigint (unsigned) | PRIMARY KEY, AUTO_INCREMENT |
-| `user_id` | bigint (unsigned) | FOREIGN KEY → users(id) ON DELETE CASCADE |
-| `room_id` | bigint (unsigned) | FOREIGN KEY → rooms(id) ON DELETE CASCADE |
-| `booking_code` | varchar(255) | NOT NULL, UNIQUE |
-| `check_in_date` | date | NOT NULL |
-| `duration_months` | integer | DEFAULT 1 |
-| `total_price` | decimal(15,2) | DEFAULT 0 |
-| `dp_amount` | decimal(15,2) | DEFAULT 0 |
-| `status` | enum('pending','confirmed','active','cancelled','completed') | DEFAULT 'pending' |
-| `notes` | text | NULLABLE |
-| `cancelled_reason` | text | NULLABLE |
-| `cancelled_by` | varchar(255) | NULLABLE |
-| `created_at` | timestamp | NULLABLE |
-| `updated_at` | timestamp | NULLABLE |
+### Tabel `payments`
 
-#### Tabel `payments`
+| Kolom | Tipe | Constraint | Keterangan |
+|-------|------|------------|------------|
+| `id` | BIGINT UNSIGNED | PK | — |
+| `booking_id` | BIGINT UNSIGNED | FK → `bookings.id` CASCADE | Booking yang dibayar |
+| `user_id` | BIGINT UNSIGNED | FK → `users.id` CASCADE | User yang membayar |
+| `amount` | DECIMAL(15,2) | NOT NULL, DEFAULT 0 | Nominal pembayaran |
+| `payment_method` | ENUM | NOT NULL | `qris`, `dana`, `ovo`, `bca` |
+| `payment_type` | ENUM | DEFAULT `'dp'` | `dp`, `monthly`, `full` |
+| `proof_path` | VARCHAR(255) | NULL | Path bukti transfer (`storage/payments/`) |
+| `status` | ENUM | DEFAULT `'pending'` | `pending`, `verified`, `rejected` |
+| `verified_at` | TIMESTAMP | NULL | Waktu verifikasi admin |
+| `verified_by` | BIGINT UNSIGNED | NULL, FK → `users.id` | Admin yang memverifikasi |
+| `notes` | TEXT | NULL | Catatan/alasan penolakan |
+| `created_at` | TIMESTAMP | NULL | — |
+| `updated_at` | TIMESTAMP | NULL | — |
 
-| Kolom | Tipe Data | Constraint |
-|---|---|---|
-| `id` | bigint (unsigned) | PRIMARY KEY, AUTO_INCREMENT |
-| `booking_id` | bigint (unsigned) | FOREIGN KEY → bookings(id) ON DELETE CASCADE |
-| `user_id` | bigint (unsigned) | FOREIGN KEY → users(id) ON DELETE CASCADE |
-| `amount` | decimal(15,2) | DEFAULT 0 |
-| `payment_method` | enum('qris','dana','ovo','bca') | NOT NULL |
-| `payment_type` | enum('dp','monthly','full') | DEFAULT 'dp' |
-| `proof_path` | varchar(255) | NULLABLE |
-| `status` | enum('pending','verified','rejected') | DEFAULT 'pending' |
-| `verified_at` | timestamp | NULLABLE |
-| `verified_by` | bigint (unsigned) | NULLABLE, FOREIGN KEY → users(id) |
-| `notes` | text | NULLABLE |
-| `created_at` | timestamp | NULLABLE |
-| `updated_at` | timestamp | NULLABLE |
+### Tabel `testimonials`
 
-#### Tabel `testimonials`
+| Kolom | Tipe | Constraint | Keterangan |
+|-------|------|------------|------------|
+| `id` | BIGINT UNSIGNED | PK | — |
+| `user_id` | BIGINT UNSIGNED | NULL, FK → `users.id` SET NULL | User terkait (opsional) |
+| `booking_id` | BIGINT UNSIGNED | NULL, FK → `bookings.id` SET NULL | Booking terkait (opsional) |
+| `name` | VARCHAR(255) | NULL | Nama tampilan (diisi admin) |
+| `label` | VARCHAR(255) | NULL | Label/jabatan penghuni |
+| `rating` | TINYINT | DEFAULT `5` | Rating bintang 1-5 |
+| `content` | TEXT | NOT NULL | Isi testimoni |
+| `status` | ENUM | DEFAULT `'pending'` | `pending`, `approved`, `rejected` |
+| `created_at` | TIMESTAMP | NULL | — |
+| `updated_at` | TIMESTAMP | NULL | — |
 
-| Kolom | Tipe Data | Constraint |
-|---|---|---|
-| `id` | bigint (unsigned) | PRIMARY KEY, AUTO_INCREMENT |
-| `user_id` | bigint (unsigned) | NULLABLE, FOREIGN KEY → users(id) ON DELETE SET NULL |
-| `name` | varchar(255) | NULLABLE |
-| `label` | varchar(255) | NULLABLE |
-| `booking_id` | bigint (unsigned) | NULLABLE, FOREIGN KEY → bookings(id) ON DELETE SET NULL |
-| `rating` | tinyint | DEFAULT 5 |
-| `content` | text | NOT NULL |
-| `status` | enum('pending','approved','rejected') | DEFAULT 'pending' |
-| `created_at` | timestamp | NULLABLE |
-| `updated_at` | timestamp | NULLABLE |
+### Tabel `sessions` *(Laravel Built-in)*
 
-#### Tabel `sessions`
+| Kolom | Tipe | Keterangan |
+|-------|------|------------|
+| `id` | VARCHAR | PK, ID sesi |
+| `user_id` | BIGINT | NULL, FK user yang login |
+| `ip_address` | VARCHAR(45) | IP klien |
+| `user_agent` | TEXT | User agent browser |
+| `payload` | LONGTEXT | Data sesi terenkripsi |
+| `last_activity` | INTEGER | Unix timestamp aktivitas terakhir |
 
-| Kolom | Tipe Data | Constraint |
-|---|---|---|
-| `id` | varchar(255) | PRIMARY KEY |
-| `user_id` | bigint (unsigned) | NULLABLE, INDEX |
-| `ip_address` | varchar(45) | NULLABLE |
-| `user_agent` | text | NULLABLE |
-| `payload` | longtext | NOT NULL |
-| `last_activity` | integer | INDEX |
-
-#### Tabel `password_reset_tokens`
-
-| Kolom | Tipe Data | Constraint |
-|---|---|---|
-| `email` | varchar(255) | PRIMARY KEY |
-| `token` | varchar(255) | NOT NULL |
-| `created_at` | timestamp | NULLABLE |
-
-#### Tabel `cache` (Laravel cache)
-
-> Dibuat oleh migrasi `0001_01_01_000001_create_cache_table.php` — tabel standar Laravel untuk cache driver database.
-
-#### Tabel `jobs`, `job_batches`, `failed_jobs` (Laravel queue)
-
-> Dibuat oleh migrasi `0001_01_01_000002_create_jobs_table.php` — tabel standar Laravel untuk queue driver database.
-
-### Relasi Antar Tabel
+### Diagram Relasi Antar Tabel
 
 ```
-users ||--o{ bookings      : "one-to-many (user memiliki banyak booking)"
-users ||--o{ payments       : "one-to-many (user memiliki banyak pembayaran)"
-users ||--o{ testimonials   : "one-to-many (opsional, user_id nullable)"
-rooms ||--o{ bookings      : "one-to-many (kamar memiliki banyak booking)"
-rooms ||--o{ room_photos   : "one-to-many (kamar memiliki banyak foto)"
-rooms }o--o{ facilities    : "many-to-many (via tabel pivot room_facility)"
-bookings ||--o{ payments   : "one-to-many (booking memiliki banyak pembayaran)"
-bookings ||--o| testimonials : "one-to-one (booking memiliki satu testimoni, opsional)"
-users ||--o{ payments (verified_by) : "one-to-many (admin yang memverifikasi)"
-```
+users ──────────────────────────────────────────┐
+  │ hasMany                                       │
+  ├──── bookings ─── belongsTo ── rooms           │
+  │         │ hasMany                             │
+  │         ├──── payments ─── belongsTo ─────────┘ (verified_by)
+  │         └──── testimonials
+  │
+  ├──── payments (langsung dari user)
+  └──── testimonials
 
-### Notasi ERD
-
-```
-users {
-    id bigint PK
-    name varchar
-    email varchar UNIQUE
-    phone varchar NULL
-    address text NULL
-    birth_date date NULL
-    role varchar DEFAULT 'user'
-    avatar varchar NULL
-    email_verified_at timestamp NULL
-    password varchar
-    remember_token varchar NULL
-    created_at timestamp
-    updated_at timestamp
-}
-
-rooms {
-    id bigint PK
-    name varchar
-    type enum('standard','deluxe','vip')
-    price decimal(15,2)
-    description text NULL
-    is_available boolean DEFAULT true
-    floor integer DEFAULT 1
-    created_at timestamp
-    updated_at timestamp
-}
-
-facilities {
-    id bigint PK
-    name varchar
-    icon varchar NULL
-    created_at timestamp
-    updated_at timestamp
-}
-
-room_facility {
-    room_id bigint FK(rooms.id)
-    facility_id bigint FK(facilities.id)
-    PK(room_id, facility_id)
-}
-
-room_photos {
-    id bigint PK
-    room_id bigint FK(rooms.id)
-    photo_path varchar
-    is_primary boolean DEFAULT false
-    created_at timestamp
-    updated_at timestamp
-}
-
-bookings {
-    id bigint PK
-    user_id bigint FK(users.id)
-    room_id bigint FK(rooms.id)
-    booking_code varchar UNIQUE
-    check_in_date date
-    duration_months integer DEFAULT 1
-    total_price decimal(15,2)
-    dp_amount decimal(15,2)
-    status enum('pending','confirmed','active','cancelled','completed')
-    notes text NULL
-    cancelled_reason text NULL
-    cancelled_by varchar NULL
-    created_at timestamp
-    updated_at timestamp
-}
-
-payments {
-    id bigint PK
-    booking_id bigint FK(bookings.id)
-    user_id bigint FK(users.id)
-    amount decimal(15,2)
-    payment_method enum('qris','dana','ovo','bca')
-    payment_type enum('dp','monthly','full')
-    proof_path varchar NULL
-    status enum('pending','verified','rejected')
-    verified_at timestamp NULL
-    verified_by bigint FK(users.id) NULL
-    notes text NULL
-    created_at timestamp
-    updated_at timestamp
-}
-
-testimonials {
-    id bigint PK
-    user_id bigint FK(users.id) NULL
-    name varchar NULL
-    label varchar NULL
-    booking_id bigint FK(bookings.id) NULL
-    rating tinyint DEFAULT 5
-    content text
-    status enum('pending','approved','rejected')
-    created_at timestamp
-    updated_at timestamp
-}
+rooms ─── hasMany ─── room_photos
+rooms ─── belongsToMany ─── facilities (via room_facility)
+rooms ─── hasMany ─── bookings
 ```
 
 ---
@@ -559,322 +415,298 @@ testimonials {
 
 ### Halaman Publik (Tanpa Login)
 
-| No | Nama Halaman | Route/URL | Komponen Utama | Fitur | Navigasi Lanjutan |
-|---|---|---|---|---|---|
-| 1 | Beranda | `GET /` | Layout `app.blade.php`, `home.blade.php` | Menampilkan 3 kamar tersedia, 3 testimoni terbaru, modal login/register | Link ke halaman kamar, tentang; modal auth |
-| 2 | Daftar Kamar | `GET /kamar` | `rooms/index.blade.php` | Daftar kamar tersedia (filter lantai), card kamar dengan foto utama & fasilitas | Link detail per kamar |
-| 3 | Detail Kamar | `GET /kamar/{room}` | `rooms/show.blade.php` | Galeri foto, deskripsi, fasilitas, harga | Link booking (jika sudah login) |
-| 4 | Tentang | `GET /tentang` | `tentang.blade.php` | Informasi tentang Kos Putri Gardenia | — |
-| 5 | Login (Modal) | `GET /login` | Modal popup di `partials/auth-modal.blade.php` | Form login (email, password) | Redirect ke dashboard setelah login |
-| 6 | Register (Modal) | `GET /register` | Modal popup di `partials/auth-modal.blade.php` | Form registrasi (nama, tgl lahir, HP, email, alamat, password) | Redirect ke home setelah register |
-| 7 | Lupa Password | `GET /forgot-password` | Blade Breeze | Form request reset password | Link reset password via email |
-| 8 | Reset Password | `GET /reset-password/{token}` | Blade Breeze | Form reset password baru | Redirect login |
+| Nama Halaman | URL / Route | View | Fitur Utama | Navigasi Lanjutan |
+|---|---|---|---|---|
+| **Beranda** | `/` (`home`) | `home.blade.php` | Showcase 3 kamar tersedia, 3 testimoni, hero section | Daftar Kamar, Login |
+| **Daftar Kamar** | `/kamar` (`rooms.index`) | `rooms/index.blade.php` | List kamar, filter lantai | Detail Kamar |
+| **Detail Kamar** | `/kamar/{room}` (`rooms.show`) | `rooms/show.blade.php` | Galeri, fasilitas, harga, tombol pesan | Login |
+| **Tentang Kami** | `/tentang` (`tentang`) | `tentang.blade.php` | Info kos, lokasi, fasilitas umum | — |
+| **Login** | `/login` (`login`) | `auth/login.blade.php` | Form login email + password | Dashboard |
+| **Register** | `/register` (`register`) | `auth/register.blade.php` | Form registrasi | Dashboard |
+| **Lupa Password** | `/forgot-password` (`password.request`) | `auth/forgot-password.blade.php` | Input email reset | Email reset |
+| **Reset Password** | `/reset-password/{token}` (`password.reset`) | `auth/reset-password.blade.php` | Form password baru | Login |
 
-### Halaman User (Setelah Login, Role: `user`)
+### Halaman User (Harus Login, Role: `user`)
 
-| No | Nama Halaman | Route/URL | Komponen Utama | Fitur | Navigasi Lanjutan |
-|---|---|---|---|---|---|
-| 1 | Dashboard User | `GET /user/dashboard` | `user/dashboard.blade.php`, layout `user.blade.php` | Ringkasan booking aktif, jumlah total booking | Link ke kamar, riwayat |
-| 2 | Daftar Kamar (User) | `GET /user/kamar` | `user/rooms/index.blade.php` | Daftar semua kamar (termasuk terisi), filter lantai | Link detail kamar |
-| 3 | Detail Kamar (User) | `GET /user/kamar/{room}` | `user/rooms/show.blade.php` | Galeri foto, deskripsi, fasilitas, harga | Tombol "Booking Sekarang" |
-| 4 | Form Booking | `GET /user/booking/{room}` | `user/booking/create.blade.php` | Form pilih tanggal check-in, metode pembayaran (QRIS/DANA/OVO/BCA), no e-wallet | Submit booking (AJAX) |
-| 5 | Detail Booking | `GET /user/booking/{booking}` | `user/booking/show.blade.php` | Detail booking, status, daftar pembayaran, upload bukti bayar | Form upload bukti pembayaran |
-| 6 | Riwayat Booking | `GET /user/riwayat` | `user/booking/history.blade.php` | Daftar semua booking user (paginated), modal detail booking | Link detail booking |
-| 7 | Edit Profil | `GET /user/profil` | `profile/edit.blade.php` | Form edit nama, HP, avatar, password | Simpan perubahan |
+| Nama Halaman | URL / Route | View | Fitur Utama | Navigasi Lanjutan |
+|---|---|---|---|---|
+| **Dashboard User** | `/user/dashboard` (`user.dashboard`) | `user/dashboard.blade.php` | Ringkasan booking aktif, total booking | Detail Booking |
+| **Daftar Kamar** | `/user/kamar` (`user.rooms`) | `user/rooms/index.blade.php` | List kamar, filter lantai | Detail Kamar |
+| **Detail Kamar** | `/user/kamar/{room}` (`user.rooms.show`) | `user/rooms/show.blade.php` | Galeri, fasilitas, tombol "Pesan Sekarang" | Form Booking |
+| **Form Booking** | `/user/booking/{room}` (`user.booking.create`) | `user/booking/create.blade.php` | Form booking dengan modal konfirmasi AJAX | Dashboard |
+| **Detail Booking** | `/user/booking/{booking}` (`user.booking.show`) | `user/booking/show.blade.php` | Detail + status + upload bukti bayar | — |
+| **Riwayat Booking** | `/user/riwayat` (`user.booking.history`) | `user/booking/history.blade.php` | List semua booking (paginated 10) | Detail Booking |
+| **Edit Profil** | `/user/profil` (`user.profile.edit`) | `profile/edit.blade.php` | Edit data diri, avatar, password | — |
 
-### Halaman Admin (Setelah Login, Role: `admin`)
+### Halaman Admin (Harus Login, Role: `admin`)
 
-| No | Nama Halaman | Route/URL | Komponen Utama | Fitur | Navigasi Lanjutan |
-|---|---|---|---|---|---|
-| 1 | Dashboard Admin | `GET /admin/dashboard` | `admin/dashboard.blade.php`, layout `admin.blade.php` | Statistik (total kamar, kamar tersedia/terisi, total booking, pending booking, total user, pending pembayaran, pendapatan bulanan), daftar booking terbaru, daftar pembayaran pending | Link ke detail booking, verifikasi pembayaran |
-| 2 | Kelola Kamar | `GET /admin/kamar` | `admin/rooms/index.blade.php` | Daftar kamar (paginated), toggle ketersediaan | Link tambah/edit/hapus kamar |
-| 3 | Tambah Kamar | `GET /admin/kamar/create` | `admin/rooms/create.blade.php` | Form input nama, tipe, lantai, harga, deskripsi, fasilitas, upload foto (multiple) | Redirect ke daftar kamar |
-| 4 | Edit Kamar | `GET /admin/kamar/{kamar}/edit` | `admin/rooms/edit.blade.php` | Form edit data kamar, kelola foto (upload/hapus), ubah fasilitas | Redirect ke daftar kamar |
-| 5 | Detail Booking | `GET /admin/booking/{booking}` | `admin/bookings/show.blade.php` | Detail booking lengkap, data user, kamar, daftar pembayaran, form ubah status booking | Aksi: ubah status, batalkan booking |
-| 6 | Kelola Pembayaran | `GET /admin/pembayaran` | `admin/payments/index.blade.php` | Daftar pembayaran (filter status, paginated), bukti bayar | Aksi: verifikasi/tolak pembayaran |
-| 7 | Kelola Testimoni | `GET /admin/testimoni` | `admin/testimonials/index.blade.php` | Daftar testimoni (paginated) | Link tambah/edit/hapus |
-| 8 | Tambah Testimoni | `GET /admin/testimoni/create` | `admin/testimonials/create.blade.php` | Form input nama, label, rating, konten | Redirect ke daftar testimoni |
-| 9 | Edit Testimoni | `GET /admin/testimoni/{testimonial}/edit` | `admin/testimonials/edit.blade.php` | Form edit data testimoni, ubah status | Redirect ke daftar testimoni |
+| Nama Halaman | URL / Route | View | Fitur Utama | Navigasi Lanjutan |
+|---|---|---|---|---|
+| **Dashboard Admin** | `/admin/dashboard` (`admin.dashboard`) | `admin/dashboard.blade.php` | Statistik, 5 booking terbaru, pembayaran pending | Detail Booking, Verifikasi |
+| **Daftar Kamar** | `/admin/kamar` (`admin.kamar.index`) | `admin/rooms/index.blade.php` | List kamar (paginated 20), toggle, edit, hapus | Tambah Kamar |
+| **Tambah Kamar** | `/admin/kamar/create` (`admin.kamar.create`) | `admin/rooms/create.blade.php` | Form tambah + upload foto + fasilitas | Daftar Kamar |
+| **Edit Kamar** | `/admin/kamar/{kamar}/edit` (`admin.kamar.edit`) | `admin/rooms/edit.blade.php` | Form edit + manajemen foto individual | Daftar Kamar |
+| **Detail Booking** | `/admin/booking/{booking}` (`admin.booking.show`) | `admin/bookings/show.blade.php` | Detail + update status + pembatalan | Daftar Pembayaran |
+| **Daftar Pembayaran** | `/admin/pembayaran` (`admin.payment.index`) | `admin/payments/index.blade.php` | List pembayaran, filter status, verifikasi/tolak | Detail Booking |
+| **Daftar Testimoni** | `/admin/testimoni` (`admin.testimonial.index`) | `admin/testimonials/index.blade.php` | List testimoni, hapus | Tambah, Edit |
+| **Tambah Testimoni** | `/admin/testimoni/create` (`admin.testimonial.create`) | `admin/testimonials/create.blade.php` | Form tambah testimoni | Daftar Testimoni |
+| **Edit Testimoni** | `/admin/testimoni/{testimonial}/edit` (`admin.testimonial.edit`) | `admin/testimonials/edit.blade.php` | Form edit + ubah status | Daftar Testimoni |
 
 ---
 
-## 7. Daftar API Endpoint
+## 7. Daftar API Endpoint / Route
 
-### Route Publik (Tanpa Autentikasi)
+> Semua endpoint berbasis web (bukan REST API murni). Response HTML kecuali yang bertanda [JSON].
 
-| Method | Path | Fungsi | Controller | Parameter | Auth |
-|---|---|---|---|---|---|
-| GET | `/` | Halaman beranda | `HomeController@index` | — | Tidak |
-| GET | `/kamar` | Daftar kamar tersedia | `RoomController@index` | Query: `lantai` (opsional) | Tidak |
-| GET | `/kamar/{room}` | Detail kamar | `RoomController@show` | Path: `room` (id) | Tidak |
-| GET | `/tentang` | Halaman tentang | `HomeController@tentang` | — | Tidak |
+### Route Publik
+
+| Method | Path | Controller Method | Fungsi | Auth |
+|--------|------|-------------------|--------|------|
+| GET | `/` | `HomeController@index` | Halaman beranda | Tidak |
+| GET | `/tentang` | `HomeController@tentang` | Tentang kami | Tidak |
+| GET | `/kamar` | `RoomController@index` | Daftar kamar (`?lantai=`) | Tidak |
+| GET | `/kamar/{room}` | `RoomController@show` | Detail kamar | Tidak |
 
 ### Route Autentikasi (Laravel Breeze)
 
-| Method | Path | Fungsi | Auth |
-|---|---|---|---|
-| GET | `/register` | Redirect ke home + buka popup register | Guest |
-| POST | `/register` | Proses registrasi user baru | Guest |
-| GET | `/login` | Redirect ke home + buka popup login | Guest |
-| POST | `/login` | Proses login | Guest |
-| GET | `/forgot-password` | Form lupa password | Guest |
-| POST | `/forgot-password` | Kirim email reset password | Guest |
-| GET | `/reset-password/{token}` | Form reset password | Guest |
-| POST | `/reset-password` | Proses reset password | Guest |
-| GET | `/verify-email` | Prompt verifikasi email | Auth |
-| GET | `/verify-email/{id}/{hash}` | Verifikasi email | Auth, Signed |
-| POST | `/email/verification-notification` | Kirim ulang email verifikasi | Auth |
-| GET | `/confirm-password` | Form konfirmasi password | Auth |
-| POST | `/confirm-password` | Proses konfirmasi password | Auth |
-| PUT | `/password` | Update password | Auth |
-| POST | `/logout` | Proses logout | Auth |
+| Method | Path | Fungsi | Kondisi |
+|--------|------|--------|---------|
+| GET | `/login` | Form login | Guest only |
+| POST | `/login` | Proses login | Guest only |
+| GET | `/register` | Form register | Guest only |
+| POST | `/register` | Proses registrasi | Guest only |
+| GET | `/forgot-password` | Form lupa password | Guest only |
+| POST | `/forgot-password` | Kirim link reset | Guest only |
+| GET | `/reset-password/{token}` | Form reset password | Guest only |
+| POST | `/reset-password` | Proses reset | Guest only |
+| POST | `/logout` | Logout | Auth |
 
-### Route User (Middleware: `auth`)
+### Route User (`/user/...`, middleware: `auth`)
 
-| Method | Path | Fungsi | Parameter/Body | Response | Auth |
-|---|---|---|---|---|---|
-| GET | `/dashboard` | Redirect ke dashboard sesuai role | — | Redirect | Auth |
-| GET | `/user/dashboard` | Dashboard user | — | View HTML | Auth |
-| GET | `/user/kamar` | Daftar kamar (semua) | Query: `lantai` (opsional) | View HTML | Auth |
-| GET | `/user/kamar/{room}` | Detail kamar | Path: `room` | View HTML | Auth |
-| GET | `/user/booking/{room}` | Form booking kamar | Path: `room` | View HTML | Auth |
-| POST | `/user/booking` | Buat booking baru | Body: `room_id`, `check_in_date`, `payment_method`, `ewallet_phone` (opsional) | JSON (AJAX) / Redirect | Auth |
-| GET | `/user/riwayat` | Riwayat booking | — | View HTML (paginated) | Auth |
-| GET | `/user/booking/{booking}` | Detail booking | Path: `booking` | View HTML | Auth (owner) |
-| POST | `/user/pembayaran/{booking}` | Upload bukti pembayaran | Body: `payment_method`, `proof` (file) | Redirect | Auth (owner) |
-| GET | `/user/profil` | Form edit profil | — | View HTML | Auth |
-| PATCH | `/user/profil` | Update profil | Body: `name`, `email`, `phone`, `avatar` (file), `current_password`, `password`, `password_confirmation` | Redirect | Auth |
+| Method | Path | Controller Method | Fungsi | Body / Parameter |
+|--------|------|-------------------|--------|-----------------|
+| GET | `/user/dashboard` | `BookingController@dashboard` | Dashboard user | — |
+| GET | `/user/kamar` | `RoomController@indexUser` | Daftar kamar | `?lantai=` |
+| GET | `/user/kamar/{room}` | `RoomController@showUser` | Detail kamar | — |
+| GET | `/user/booking/{room}` | `BookingController@create` | Form booking | — |
+| POST | `/user/booking` | `BookingController@store` | **[JSON]** Submit booking | `room_id`, `check_in_date`, `payment_method`, `ewallet_phone?` |
+| GET | `/user/booking/{booking}` | `BookingController@show` | Detail booking | — |
+| GET | `/user/riwayat` | `BookingController@history` | Riwayat booking | — |
+| POST | `/user/pembayaran/{booking}` | `PaymentController@store` | Upload bukti bayar | `payment_method`, `proof` (image max 2MB) |
+| GET | `/user/profil` | `ProfileController@edit` | Form edit profil | — |
+| PATCH | `/user/profil` | `ProfileController@update` | Update profil | `name`, `phone`, `address`, `birth_date`, `avatar?`, `password?` |
 
-**Contoh Response POST `/user/booking` (AJAX):**
-
+**Contoh Response JSON — POST `/user/booking` sukses:**
 ```json
 {
   "success": true,
-  "nama": "John Doe",
-  "telepon": "081234567890",
-  "kamar": "Kamar 101",
+  "nama": "Siti Rahayu",
+  "telepon": "08123456789",
+  "kamar": "Kamar A1",
   "lantai": 1,
-  "tanggal_masuk": "Senin, 14 Juli 2026",
+  "tanggal_masuk": "Senin, 01 September 2026",
   "metode": "qris",
   "booking_code": "GDN-12345678",
-  "tanggal_transaksi": "Minggu, 13 Juli 2026",
-  "sisa": 750000
+  "tanggal_transaksi": "Selasa, 22 Juli 2026",
+  "sisa": 800000
 }
 ```
 
-### Route Admin (Middleware: `auth`, `admin`)
+**Contoh Response JSON — POST `/user/booking` gagal:**
+```json
+{
+  "success": false,
+  "message": "Kamar sudah terisi."
+}
+```
 
-| Method | Path | Fungsi | Parameter/Body | Auth |
-|---|---|---|---|---|
-| GET | `/admin/dashboard` | Dashboard admin | — | Admin |
-| GET | `/admin/kamar` | Daftar kamar | — | Admin |
-| GET | `/admin/kamar/create` | Form tambah kamar | — | Admin |
-| POST | `/admin/kamar` | Simpan kamar baru | Body: `name`, `type`, `floor`, `price`, `description`, `photos[]`, `facilities[]` | Admin |
-| GET | `/admin/kamar/{kamar}/edit` | Form edit kamar | Path: `kamar` | Admin |
-| PUT | `/admin/kamar/{kamar}` | Update data kamar | Body: `name`, `type`, `floor`, `price`, `description`, `is_available`, `facilities[]` | Admin |
-| DELETE | `/admin/kamar/{kamar}` | Hapus kamar | Path: `kamar` | Admin |
-| POST | `/admin/kamar/{kamar}/foto` | Upload foto kamar | Body: `photo` (file) | Admin |
-| DELETE | `/admin/foto/{photo}` | Hapus foto kamar | Path: `photo` | Admin |
-| PATCH | `/admin/kamar/{kamar}/toggle` | Toggle ketersediaan kamar | Path: `kamar` | Admin |
-| GET | `/admin/booking/{booking}` | Detail booking | Path: `booking` | Admin |
-| PATCH | `/admin/booking/{booking}/status` | Update status booking | Body: `status`, `cancel_reason` (opsional) | Admin |
-| GET | `/admin/pembayaran` | Daftar pembayaran | Query: `status` (opsional) | Admin |
-| PATCH | `/admin/pembayaran/{payment}/verify` | Verifikasi pembayaran | Path: `payment` | Admin |
-| PATCH | `/admin/pembayaran/{payment}/reject` | Tolak pembayaran | Body: `reject_notes` (opsional) | Admin |
-| GET | `/admin/testimoni` | Daftar testimoni | — | Admin |
-| GET | `/admin/testimoni/create` | Form tambah testimoni | — | Admin |
-| POST | `/admin/testimoni` | Simpan testimoni baru | Body: `name`, `label`, `rating`, `content` | Admin |
-| GET | `/admin/testimoni/{testimonial}/edit` | Form edit testimoni | Path: `testimonial` | Admin |
-| PUT | `/admin/testimoni/{testimonial}` | Update testimoni | Body: `name`, `label`, `rating`, `content`, `status` | Admin |
-| DELETE | `/admin/testimoni/{testimonial}` | Hapus testimoni | Path: `testimonial` | Admin |
+### Route Admin (`/admin/...`, middleware: `auth`, `admin`)
+
+| Method | Path | Controller Method | Fungsi | Body / Parameter |
+|--------|------|-------------------|--------|-----------------|
+| GET | `/admin/dashboard` | `Admin\DashboardController@index` | Dashboard + statistik | — |
+| GET | `/admin/kamar` | `Admin\RoomController@index` | Daftar kamar (paginate 20) | — |
+| GET | `/admin/kamar/create` | `Admin\RoomController@create` | Form tambah kamar | — |
+| POST | `/admin/kamar` | `Admin\RoomController@store` | Simpan kamar baru | `name`, `type`, `floor`, `price`, `description?`, `photos[]?`, `facilities[]?` |
+| GET | `/admin/kamar/{kamar}/edit` | `Admin\RoomController@edit` | Form edit kamar | — |
+| PUT | `/admin/kamar/{kamar}` | `Admin\RoomController@update` | Update data kamar | `name`, `type`, `floor`, `price`, `description?`, `is_available?`, `facilities[]?` |
+| DELETE | `/admin/kamar/{kamar}` | `Admin\RoomController@destroy` | Hapus kamar + semua foto | — |
+| POST | `/admin/kamar/{kamar}/foto` | `Admin\RoomController@uploadPhoto` | Upload foto tambahan | `photo` (image max 2MB) |
+| DELETE | `/admin/foto/{photo}` | `Admin\RoomController@deletePhoto` | Hapus 1 foto | — |
+| PATCH | `/admin/kamar/{kamar}/toggle` | `Admin\RoomController@toggleAvailability` | Toggle ketersediaan | — |
+| GET | `/admin/booking/{booking}` | `Admin\BookingController@show` | Detail booking | — |
+| PATCH | `/admin/booking/{booking}/status` | `Admin\BookingController@updateStatus` | Update status booking | `status`, `cancel_reason?` |
+| GET | `/admin/pembayaran` | `Admin\PaymentController@index` | Daftar pembayaran | `?status=` |
+| PATCH | `/admin/pembayaran/{payment}/verify` | `Admin\PaymentController@verify` | Verifikasi pembayaran | — |
+| PATCH | `/admin/pembayaran/{payment}/reject` | `Admin\PaymentController@reject` | Tolak pembayaran | `reject_notes?` |
+| GET | `/admin/testimoni` | `Admin\TestimonialController@index` | Daftar testimoni | — |
+| GET | `/admin/testimoni/create` | `Admin\TestimonialController@create` | Form tambah testimoni | — |
+| POST | `/admin/testimoni` | `Admin\TestimonialController@store` | Simpan testimoni | `name`, `label?`, `rating`, `content` |
+| GET | `/admin/testimoni/{testimonial}/edit` | `Admin\TestimonialController@edit` | Form edit testimoni | — |
+| PUT | `/admin/testimoni/{testimonial}` | `Admin\TestimonialController@update` | Update testimoni | `name`, `label?`, `rating`, `content`, `status` |
+| DELETE | `/admin/testimoni/{testimonial}` | `Admin\TestimonialController@destroy` | Hapus testimoni | — |
 
 ---
 
 ## 8. Fitur & Logika Bisnis Utama
 
-### 8.1 Sistem Booking Kamar
+### 8.1 Manajemen Kamar
 
-**Alur:**
-1. User memilih kamar yang tersedia (`is_available = true`)
-2. User mengisi form booking: tanggal check-in (minimal hari ini), metode pembayaran
-3. Sistem memvalidasi:
-   - `room_id` harus valid dan ada di database
-   - `check_in_date` harus tanggal hari ini atau setelahnya
-   - `payment_method` harus salah satu: `qris`, `dana`, `ovo`, `bca`
-   - Jika metode `dana` atau `ovo`, nomor e-wallet wajib diisi
-4. Sistem mengecek ketersediaan kamar (`is_available`)
-5. Generate kode booking: format `GDN-XXXXXXXX` (8 digit random)
-6. Durasi default: 1 bulan
-7. Total harga = harga kamar per bulan
-8. DP tetap = Rp250.000 (konstanta `Booking::DP_AMOUNT`)
-9. Booking dibuat dengan status `pending`
-10. Pembayaran DP dibuat dengan status `pending` (tanpa bukti bayar saat ini)
+**Fitur:**
+- Admin dapat menambah, mengedit, dan menghapus kamar
+- Tipe kamar: `standard`, `deluxe`, `vip`; Lantai: `1` atau `2`
+- Foto pertama yang diupload otomatis menjadi **foto utama** (`is_primary = true`)
+- Jika foto utama dihapus, foto berikutnya otomatis dijadikan foto utama
+- Toggle ketersediaan kamar secara manual oleh admin
+- Kamar dapat dihubungkan ke banyak fasilitas (many-to-many via `room_facility`)
 
-**Status Booking:**
+**Status Kamar:**
 
-| Status | Deskripsi |
-|---|---|
-| `pending` | Booking baru, menunggu verifikasi pembayaran DP oleh admin |
-| `confirmed` | Pembayaran DP diverifikasi oleh admin |
-| `active` | Penghuni aktif menempati kamar |
-| `cancelled` | Booking dibatalkan (oleh admin) |
-| `completed` | Masa sewa selesai |
+| `is_available` | Artinya |
+|----------------|---------|
+| `true` | Kamar tersedia, tampil di halaman publik |
+| `false` | Kamar tidak tersedia (dihuni atau dikunci manual) |
 
-**Aturan Bisnis:**
-- Kamar **tidak** langsung ditandai unavailable saat booking dibuat — menunggu admin verifikasi pembayaran
-- Saat booking `cancelled` atau `completed`, kamar otomatis dibebaskan (`is_available = true`)
-- Saat booking selain `cancelled`/`completed`, kamar ditandai tidak tersedia (`is_available = false`)
-- User hanya bisa melihat booking miliknya sendiri (pengecekan `user_id`)
+**Aturan Tampil:**  
+Kamar hanya tampil di halaman publik jika `is_available = true` **DAN** tidak ada booking dengan status `pending`, `confirmed`, atau `active` (scope `noActiveBooking` di model Room).
 
-### 8.2 Sistem Pembayaran
+### 8.2 Proses Booking
 
-**Metode Pembayaran:**
-- QRIS
-- DANA
-- OVO
-- BCA (transfer bank)
+**Validasi Form:**
+- `room_id`: wajib, harus ada di tabel `rooms`
+- `check_in_date`: wajib, harus hari ini atau yang akan datang
+- `payment_method`: wajib, salah satu dari `qris`, `dana`, `ovo`, `bca`
+- `ewallet_phone`: wajib jika metode `dana` atau `ovo`
 
-**Tipe Pembayaran:**
+**Kode Booking:** Format `GDN-XXXXXXXX` (8 digit angka acak dari `mt_rand`)
 
-| Tipe | Deskripsi |
-|---|---|
-| `dp` | Down Payment (uang muka) — Rp250.000 |
-| `monthly` | Pembayaran bulanan |
-| `full` | Pembayaran penuh |
+**Uang Muka (DP):** Tetap **Rp 250.000** untuk semua booking (`Booking::DP_AMOUNT = 250_000`)
 
-> **Catatan:** Saat ini codebase hanya mengimplementasikan pembayaran DP. Tipe `monthly` dan `full` didefinisikan di schema tapi belum digunakan dalam logika controller.
+**State Machine Status Booking:**
+
+| Status | Deskripsi | Efek ke Kamar |
+|--------|-----------|---------------|
+| `pending` | Booking dibuat, menunggu verifikasi DP | Kamar masih tersedia (belum dikunci) |
+| `confirmed` | Pembayaran DP terverifikasi admin | Kamar `is_available = false` |
+| `active` | Penghuni aktif menghuni | Kamar tetap tidak tersedia |
+| `completed` | Masa sewa selesai | Kamar `is_available = true` kembali |
+| `cancelled` | Dibatalkan / DP ditolak | Kamar `is_available = true` kembali |
+
+### 8.3 Manajemen Pembayaran
 
 **Status Pembayaran:**
 
-| Status | Deskripsi |
-|---|---|
-| `pending` | Menunggu verifikasi admin |
-| `verified` | Pembayaran diverifikasi admin |
-| `rejected` | Pembayaran ditolak admin |
+| Status | Deskripsi | Efek ke Booking |
+|--------|-----------|-----------------|
+| `pending` | Menunggu verifikasi admin | Booking tetap `pending` |
+| `verified` | Diterima admin | Booking → `confirmed`, kamar dikunci |
+| `rejected` | Ditolak admin | Booking → `cancelled` |
 
-**Alur Verifikasi:**
-1. User membuat booking → pembayaran DP otomatis dibuat (status `pending`)
-2. User dapat upload bukti bayar melalui halaman detail booking (file gambar, max 2MB)
-3. Admin melihat daftar pembayaran pending di dashboard
-4. Admin verifikasi (`verify`):
-   - Status pembayaran → `verified`
-   - `verified_at` dicatat
-   - `verified_by` = ID admin
-   - Booking → `confirmed`
-   - Kamar → `is_available = false`
-5. Admin tolak (`reject`):
-   - Status pembayaran → `rejected`
-   - Booking → `cancelled`
-   - `cancelled_reason` = catatan admin
-   - `cancelled_by` = 'admin'
+**Aturan:**
+- Pembayaran manual (tidak ada payment gateway otomatis)
+- File bukti transfer: gambar, max 2MB, disimpan di `storage/app/public/payments/`
+- Verifikasi dicatat dengan `verified_at` (timestamp) dan `verified_by` (user_id admin) menggunakan DB transaction
+- Penolakan langsung membatalkan booking dengan alasan dari `reject_notes`
 
-### 8.3 Manajemen Kamar (Admin)
+### 8.4 Manajemen Testimoni
 
-**Fitur:**
-- CRUD kamar (nama, tipe, lantai, harga, deskripsi)
-- Upload multiple foto (format: JPG, JPEG, PNG, WebP, max 2MB per file)
-- Foto pertama otomatis menjadi foto utama (`is_primary`)
-- Jika foto utama dihapus, foto berikutnya otomatis jadi foto utama
-- Toggle ketersediaan kamar (tersedia/terisi)
-- Kelola fasilitas per kamar (many-to-many)
+**Desain:** Testimoni dikelola **sepenuhnya oleh admin** — bukan disubmit oleh user (refaktor Juli 2026).
 
-**Tipe Kamar:**
-- `standard`
-- `deluxe`
-- `vip`
+**Aturan:**
+- Admin mengisi nama, label (mis. "Mahasiswi"), rating (1-5), isi testimoni
+- Status testimoni baru yang dibuat admin langsung `approved`
+- Hanya testimoni `approved` yang tampil di beranda publik
+- Kolom `user_id` dan `booking_id` opsional (bisa null untuk testimoni manual)
+- Accessor `displayName`: prioritas nama manual → nama akun user → `'Penghuni'`
 
-**Lantai:**
-- Lantai 1
-- Lantai 2
+### 8.5 Manajemen Profil User
 
-**Validasi Upload Foto:**
-- Harus berupa gambar (`image`)
-- Format: `jpg`, `jpeg`, `png`, `webp`
-- Maksimal 2MB per file
+- Edit: nama, nomor telepon, alamat, tanggal lahir
+- Upload avatar (disimpan di `storage/app/public/avatars/`)
+- Ganti password (memerlukan password lama)
+- **Email read-only** dari form ini
+- Avatar lama dihapus dari storage sebelum menyimpan yang baru
 
-### 8.4 Manajemen Testimoni (Admin)
+### 8.6 Dashboard Admin — Statistik Real-Time
 
-**Catatan Penting:** Testimoni dikelola langsung oleh admin, **bukan** diajukan oleh user.
-
-**Fitur:**
-- CRUD testimoni
-- Field: nama tampilan, label (default: "Penghuni Aktif"), rating (1-5), konten, status
-- Status: `approved` atau `rejected`
-- Saat dibuat admin, status otomatis `approved`
-- Testimoni dengan status `approved` ditampilkan di halaman beranda publik
-
-### 8.5 Profil User
-
-**Fitur:**
-- Edit nama, nomor HP
-- Upload avatar (JPG/PNG, max 2MB) — avatar lama dihapus dari storage
-- Ganti password (wajib isi password lama)
-- Email bersifat **read-only** (tidak bisa diubah dari form profil)
-
-### 8.6 Fasilitas Standar Kamar
-
-Selain fasilitas yang dikelola via database, terdapat **fasilitas standar** yang berlaku untuk semua kamar (didefinisikan di `App\Support\RoomFacilities`):
-
-1. Kamar Mandi Dalam
-2. Meja Belajar
-3. WiFi (50 Mbps)
-4. Kasur Nyaman
-5. Lemari Baju
-6. Listrik (termasuk biaya dasar)
+| Metrik | Cara Hitung |
+|--------|-------------|
+| Total kamar | `Room::count()` |
+| Kamar tersedia | `Room::where('is_available', true)->count()` |
+| Kamar terisi | `Room::where('is_available', false)->count()` |
+| Total booking | `Booking::count()` |
+| Booking pending | `Booking::where('status', 'pending')->count()` |
+| Total user | `User::where('role', 'user')->count()` |
+| Pembayaran pending | `Payment::where('status', 'pending')->count()` |
+| Pendapatan bulan ini | Sum `amount` dari payments `verified` di bulan & tahun berjalan |
+| Verifikasi bulan ini | Count payments `verified` di bulan & tahun berjalan |
 
 ---
 
 ## 9. Integrasi Eksternal
 
-| Integrasi | Status | Keterangan |
-|---|---|---|
-| **Payment Gateway** | ❌ Tidak ada | Pembayaran menggunakan metode manual (transfer/e-wallet) dengan verifikasi admin. Tidak ada integrasi payment gateway otomatis (Midtrans, Xendit, dll). |
-| **WhatsApp API** | ❌ Tidak ditemukan di codebase | — |
-| **Email Service** | ⚠️ Minimal | MAIL_MAILER = `log` (email hanya masuk log, tidak benar-benar terkirim). Infrastruktur email tersedia via konfigurasi Laravel tapi belum dikonfigurasi untuk production. |
-| **Cloud Storage** | ❌ Tidak ada | File disimpan di disk `local` (public storage). Konfigurasi AWS S3 ada di `.env` tapi tidak terisi. |
-| **InfinityFree Hosting** | ✅ Ada | Konfigurasi hosting production ditemukan di `.env_hosting` (MySQL di `sql307.infinityfree.com`). |
+### Payment Gateway
+
+**Tidak ada integrasi payment gateway otomatis.** Sistem menggunakan **manual transfer**:
+1. User memilih metode: QRIS, Dana, OVO, atau BCA
+2. User transfer ke rekening/nomor pemilik kos secara mandiri di luar sistem
+3. User mengupload foto bukti transfer ke sistem
+4. Admin memverifikasi secara manual
+
+> **Catatan:** Informasi rekening/nomor tujuan transfer **tidak ditemukan di codebase** — kemungkinan ditampilkan secara statis di template Blade atau dikomunikasikan di luar sistem.
+
+### Hosting: InfinityFree
+
+| Aspek | Detail |
+|-------|--------|
+| Platform | InfinityFree (shared hosting gratis) |
+| FTP Server | `ftpupload.net:21` |
+| MySQL Host | `sql306.infinityfree.com` (sesuai panel) |
+| PHP Support | 8.2 (kompatibel Laravel 12) |
+| Batasan | Tidak ada SSH, tidak ada cron job, tidak ada `exec()`/`shell_exec()`, bandwidth terbatas, max file upload 10MB via FTP |
+
+### Email
+
+Driver mail default adalah `log` — email hanya ditulis ke file log, tidak benar-benar dikirim. Tidak ada integrasi SMTP aktif (Mailgun, SendGrid, dsb.) di codebase.
+
+### Storage File
+
+File upload disimpan di `storage/app/public/` dan diakses via symlink `public/storage/`. Di production InfinityFree, symlink dibuat manual via script PHP helper (tidak bisa `php artisan storage:link` karena tidak ada SSH).
 
 ---
 
 ## 10. Dependency & Package
 
-### PHP (composer.json)
-
-#### Production Dependencies (`require`)
+### PHP Dependencies (`composer.json`)
 
 | Package | Versi | Fungsi |
-|---|---|---|
+|---------|-------|--------|
 | `php` | ^8.2 | Runtime PHP |
-| `laravel/framework` | ^12.0 | Framework utama Laravel |
-| `laravel/tinker` | ^2.10.1 | REPL interaktif untuk debugging Eloquent & Laravel |
+| `laravel/framework` | ^12.0 | Core Laravel: routing, ORM, session, middleware, dsb |
+| `laravel/tinker` | ^2.10.1 | REPL interaktif untuk eksplorasi aplikasi di CLI |
+| `fakerphp/faker` | ^1.23 (dev) | Generate data dummy untuk factory/seeder |
+| `laravel/breeze` | ^2.4 (dev) | Starter kit autentikasi |
+| `laravel/pail` | ^1.2.2 (dev) | Log viewer real-time di terminal |
+| `laravel/pint` | ^1.13 (dev) | Code formatter PHP |
+| `laravel/sail` | ^1.41 (dev) | Docker environment untuk development lokal |
+| `mockery/mockery` | ^1.6 (dev) | Mocking library untuk unit testing |
+| `nunomaduro/collision` | ^8.6 (dev) | Error reporting yang lebih informatif di CLI |
+| `phpunit/phpunit` | ^11.5.3 (dev) | Framework unit testing |
 
-#### Development Dependencies (`require-dev`)
-
-| Package | Versi | Fungsi |
-|---|---|---|
-| `fakerphp/faker` | ^1.23 | Generator data palsu untuk testing & seeding |
-| `laravel/breeze` | ^2.4 | Scaffolding autentikasi (login, register, reset password) |
-| `laravel/pail` | ^1.2.2 | Real-time log viewer di terminal |
-| `laravel/pint` | ^1.13 | PHP code formatter (PSR-12) |
-| `laravel/sail` | ^1.41 | Docker development environment untuk Laravel |
-| `mockery/mockery` | ^1.6 | Mocking framework untuk unit testing |
-| `nunomaduro/collision` | ^8.6 | Error handler yang indah untuk CLI |
-| `phpunit/phpunit` | ^11.5.3 | Framework testing unit PHP |
-
-### Node.js (package.json)
+### JavaScript Dependencies (`package.json`)
 
 | Package | Versi | Fungsi |
-|---|---|---|
-| `@tailwindcss/forms` | ^0.5.2 | Plugin TailwindCSS untuk reset & styling form elements |
-| `@tailwindcss/vite` | ^4.0.0 | Plugin Vite untuk TailwindCSS |
-| `alpinejs` | ^3.4.2 | Framework JavaScript ringan untuk interaktivitas UI (modal, dropdown, toggle) |
-| `autoprefixer` | ^10.4.2 | PostCSS plugin untuk auto-prefix CSS |
-| `axios` | ^1.7.4 | HTTP client untuk AJAX requests |
-| `concurrently` | ^9.0.1 | Menjalankan multiple commands secara bersamaan (server + queue + vite) |
-| `laravel-vite-plugin` | ^1.2.0 | Plugin Vite untuk integrasi asset bundling dengan Laravel |
-| `postcss` | ^8.4.31 | CSS processor framework |
+|---------|-------|--------|
+| `alpinejs` | ^3.4.2 | Framework JS ringan: reaktivitas UI, modal, dropdown |
+| `axios` | ^1.7.4 | HTTP client untuk AJAX request |
 | `tailwindcss` | ^3.1.0 | Utility-first CSS framework |
-| `vite` | ^6.0.11 | Build tool & development server untuk frontend |
+| `@tailwindcss/forms` | ^0.5.2 | Plugin Tailwind: reset style elemen form |
+| `@tailwindcss/vite` | ^4.0.0 | Integrasi Tailwind dengan Vite |
+| `vite` | ^6.0.11 | Build tool modern: bundling CSS/JS, HMR |
+| `laravel-vite-plugin` | ^1.2.0 | Jembatan antara Vite dan Laravel (asset manifests) |
+| `autoprefixer` | ^10.4.2 | PostCSS plugin: tambah vendor prefix CSS otomatis |
+| `postcss` | ^8.4.31 | CSS processor pipeline |
+| `concurrently` | ^9.0.1 | Jalankan beberapa command sekaligus (dev mode) |
 
 ---
 
@@ -884,21 +716,21 @@ Selain fasilitas yang dikelola via database, terdapat **fasilitas standar** yang
 
 - PHP >= 8.2
 - Composer
-- Node.js & npm
-- MySQL (atau SQLite untuk development ringan)
-- Laragon (opsional, untuk Windows)
+- Node.js >= 18 & NPM
+- Git
+- (Opsional) Laragon / XAMPP / WAMP untuk lingkungan lokal
 
-### Langkah Instalasi
+### Langkah Setup Lokal
 
 ```bash
 # 1. Clone repository
-git clone <repository-url> gardenia-kosla122
-cd gardenia-kosla122
+git clone https://github.com/regitadwicahyani27-dot/kost_Gardenia.git
+cd kost_Gardenia
 
-# 2. Install dependency PHP
+# 2. Install PHP dependencies
 composer install
 
-# 3. Install dependency Node.js
+# 3. Install JS dependencies
 npm install
 
 # 4. Salin file environment
@@ -907,96 +739,81 @@ cp .env.example .env
 # 5. Generate application key
 php artisan key:generate
 
-# 6. Konfigurasi database di .env
-# Untuk MySQL:
-#   DB_CONNECTION=mysql
-#   DB_HOST=127.0.0.1
-#   DB_PORT=3306
-#   DB_DATABASE=gardenia_kos
-#   DB_USERNAME=root
-#   DB_PASSWORD=
-#
-# Untuk SQLite (default):
-#   DB_CONNECTION=sqlite
-#   (pastikan file database/database.sqlite ada)
+# 6. Buat file SQLite (database lokal default)
+# Linux/Mac:
+touch database/database.sqlite
+# Windows PowerShell:
+New-Item -ItemType File database/database.sqlite
 
 # 7. Jalankan migrasi database
 php artisan migrate
 
-# 8. Jalankan seeder (membuat akun admin default)
-php artisan db:seed
-# Akun admin:
-#   Email: admin@gardenia.com
-#   Password: admin123
+# 8. Buat akun admin
+php artisan db:seed --class=AdminSeeder
 
-# 9. Buat symbolic link untuk public storage
+# 9. Buat symlink storage untuk file upload
 php artisan storage:link
 
-# 10. Build asset frontend (development)
+# 10. Build aset frontend (untuk production)
+npm run build
+# ATAU untuk development dengan hot reload:
 npm run dev
 
-# 11. Jalankan server Laravel
+# 11. Jalankan server development
 php artisan serve
 ```
 
-### Menjalankan dengan Script Dev (Concurrent)
+Akses di: **http://localhost:8000**
+
+### Kredensial Admin Default
+
+| Field | Value |
+|-------|-------|
+| Email | `admin@gardenia.com` |
+| Password | `admin123` |
+
+### Menjalankan Semua Service Sekaligus (Development)
 
 ```bash
-# Menjalankan server, queue, log viewer, dan vite secara bersamaan
-composer dev
+composer run dev
 ```
 
-Perintah ini menjalankan:
-- `php artisan serve` — Server Laravel
-- `php artisan queue:listen --tries=1` — Queue worker
-- `php artisan pail --timeout=0` — Real-time log viewer
-- `npm run dev` — Vite dev server
+Menjalankan secara bersamaan:
+- `php artisan serve` — web server Laravel
+- `php artisan queue:listen --tries=1` — queue worker
+- `php artisan pail --timeout=0` — log viewer real-time
+- `npm run dev` — Vite HMR server
 
-### Akses Aplikasi
+### Deploy ke Production (InfinityFree)
 
-| URL | Keterangan |
-|---|---|
-| `http://localhost:8000` | Halaman beranda publik |
-| `http://localhost:8000/login` | Login (redirect ke modal) |
-| `http://localhost:8000/admin/dashboard` | Dashboard admin (login sebagai admin) |
-| `http://localhost:8000/user/dashboard` | Dashboard user (login sebagai user) |
+Lihat panduan lengkap di `deploy-infinityfree/PANDUAN-DEPLOY.md`.
+
+Ringkasan:
+1. Buat akun hosting dan database MySQL di InfinityFree
+2. Import `database/gardenia_kos.sql` via phpMyAdmin
+3. Edit `.env` dengan credentials production (DB host, nama DB, username, password, APP_URL)
+4. Build frontend: `npm run build`
+5. Upload semua file ke `htdocs/` via FileZilla (FTP ke `ftpupload.net:21`)
+6. Copy `deploy-infinityfree/.htaccess.root` ke root `htdocs/` sebagai `.htaccess`
+7. Set permission `storage/` dan `bootstrap/cache/` ke `777` (recursive)
+8. Buat symlink storage via script PHP helper (jalankan di browser, lalu hapus)
 
 ---
 
-## 12. Kendala/Catatan Teknis
+## 12. Kendala / Catatan Teknis
 
-### Pembayaran Tipe `monthly` dan `full`
-
-- Schema database mendukung tipe pembayaran `dp`, `monthly`, dan `full`, tetapi **hanya `dp` yang diimplementasikan** dalam logika controller. Fitur pembayaran bulanan dan penuh belum dikembangkan.
-
-### Pembayaran DP Tanpa Bukti Bayar
-
-- Saat booking pertama kali dibuat (via `BookingController@store`), pembayaran DP dibuat **tanpa bukti bayar** (`proof_path = null`). User bisa upload bukti bayar terpisah melalui `PaymentController@store`.
-
-### Email Tidak Aktif
-
-- Mail driver diset ke `log` (development) sehingga email verifikasi dan reset password **hanya masuk log** dan tidak benar-benar terkirim. Untuk production, perlu dikonfigurasi SMTP yang sesuai.
-
-### Kredensial `.env_hosting` Terekspos
-
-- File `.env_hosting` sebelumnya berisi kredensial database production (InfinityFree) yang hardcoded di repository. **Sudah difix**: file telah ditambahkan ke `.gitignore` dan dihapus dari git tracking (`git rm --cached`). File tetap ada di lokal untuk referensi. **Disarankan rotasi password database production** karena kredensial lama sudah terlanjur tersimpan di git history.
-
-### `APP_NAME` Default
-
-- `APP_NAME` di `.env` masih `Laravel` (default). Untuk production, sebaiknya diubah menjadi `"Kos Putri Gardenia"` (seperti di `.env_hosting`).
-
-### Tidak Ada TODO/FIXME di Source Code
-
-- Tidak ditemukan komentar `TODO`, `FIXME`, `HACK`, atau `XXX` di source code aplikasi (`app/` dan `resources/`).
-
-### Tidak Ada Automated Tests
-
-- Folder `tests/` ada tetapi belum berisi test khusus project. Hanya terdapat file default dari Laravel.
-
-### Fasilitas Standar vs Fasilitas Database
-
-- Terdapat dualitas: fasilitas bisa dikelola via database (tabel `facilities` + pivot `room_facility`) **dan** ada fasilitas standar hardcoded di `App\Support\RoomFacilities`. Perlu diperhatikan mana yang digunakan di masing-masing halaman untuk menghindari duplikasi informasi.
-
-### Durasi Booking Tetap 1 Bulan
-
-- Durasi booking saat ini di-hardcode menjadi `1` bulan (`'duration_months' => 1`). Field `duration_months` ada di database tetapi user tidak bisa memilih durasi sewa yang berbeda dari form booking.
+| # | Kategori | Deskripsi | Lokasi |
+|---|----------|-----------|--------|
+| 1 | **TODO** | `payment_type` punya opsi `monthly` dan `full` tapi sistem hanya menggunakan `dp`. Pembayaran cicilan bulanan dan pelunasan penuh belum diimplementasikan. | `Payment.php`, migration payments |
+| 2 | **TODO** | `duration_months` selalu hardcoded `1`. Belum ada fitur booking multi-bulan. | `BookingController.php` baris 62 |
+| 3 | **Keamanan** | Kode booking menggunakan `mt_rand()` yang tidak cryptographically secure. Berpotensi tabrakan meski ada constraint UNIQUE di DB. | `BookingController.php` baris 54 |
+| 4 | **Data Tidak Ada** | Nomor rekening/dompet digital tujuan transfer tidak ditemukan di codebase. | — |
+| 5 | **Email Tidak Aktif** | Mail driver `log` — tidak ada notifikasi email untuk booking, verifikasi pembayaran, dsb. | `.env.example` |
+| 6 | **Batasan Hosting** | InfinityFree tidak mendukung cron job. Otomatisasi perubahan status booking harus dilakukan manual oleh admin. | `PANDUAN-DEPLOY.md` |
+| 7 | **Batasan Hosting** | InfinityFree tidak mendukung SSH — perintah Artisan tidak bisa dijalankan di production. Migrasi harus via SQL manual. | `PANDUAN-DEPLOY.md` |
+| 8 | **Breaking Change** | Sistem testimoni direfaktor Juli 2026 dari pengajuan user menjadi manajemen penuh admin. | Migration `2026_07_08_091431...` |
+| 9 | **Race Condition** | Tidak ada mekanisme locking kamar saat booking dibuat. Dua user bisa memesan kamar yang sama bersamaan sebelum admin verifikasi salah satu. | `BookingController@store` |
+| 10 | **Typo** | Komentar "ponytail:" di `Room.php` baris 37 kemungkinan artefak dari editor AI. | `app/Models/Room.php` baris 37 |
+| 11 | **Fasilitas Ganda** | Dua sistem fasilitas yang tidak saling terhubung: (1) `RoomFacilities` statis untuk halaman publik; (2) tabel `facilities` yang bisa dikonfigurasi per kamar oleh admin. | `app/Support/RoomFacilities.php`, `app/Models/Facility.php` |
+| 12 | **Fitur Tidak Ada** | Tidak ada fitur hapus akun user. | — |
+| 13 | **Testing** | Tidak ada test case custom untuk fitur aplikasi — hanya boilerplate default Laravel. | `tests/` |

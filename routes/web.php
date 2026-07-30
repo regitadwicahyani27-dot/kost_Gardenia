@@ -56,6 +56,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // Booking (hanya detail & update status — index dihapus)
     Route::get('/booking/{booking}', [\App\Http\Controllers\Admin\BookingController::class, 'show'])->name('booking.show');
     Route::patch('/booking/{booking}/status', [\App\Http\Controllers\Admin\BookingController::class, 'updateStatus'])->name('booking.status');
+    Route::post('/booking/{booking}/manual-payment', [\App\Http\Controllers\Admin\BookingController::class, 'recordManualPayment'])->name('booking.manual-payment');
 
     // Pembayaran
     Route::get('/pembayaran', [\App\Http\Controllers\Admin\PaymentController::class, 'index'])->name('payment.index');

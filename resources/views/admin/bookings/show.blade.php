@@ -100,7 +100,10 @@
                         <div class="border border-gray-100 rounded-xl p-4">
                             <div class="flex items-center justify-between mb-3">
                                 <div>
-                                    <p class="text-sm font-semibold text-gray-900">{{ $typeLabels[$payment->payment_type] ?? $payment->payment_type }} · {{ strtoupper($payment->payment_method) }}</p>
+                                    <p class="text-sm font-semibold text-gray-900">
+                                        {{ $typeLabels[$payment->payment_type] ?? $payment->payment_type }} · 
+                                        {{ $payment->payment_method === 'cash' ? 'Tunai (Offline)' : strtoupper($payment->payment_method) }}
+                                    </p>
                                     <p class="text-xs text-gray-400">{{ $payment->created_at->format('d M Y H:i') }}</p>
                                 </div>
                                 <div class="text-right">
@@ -121,6 +124,14 @@
                                     <p class="text-xs font-semibold text-gray-700">Bukti Pembayaran</p>
                                     <p class="text-[10px] text-gray-400">Klik untuk memperbesar</p>
                                 </div>
+                            </div>
+                            @endif
+
+                            {{-- Catatan untuk pembayaran cash --}}
+                            @if($payment->payment_method === 'cash' && $payment->notes)
+                            <div class="bg-blue-50 rounded-lg p-3 mt-2">
+                                <p class="text-xs font-semibold text-blue-800 mb-1">Catatan</p>
+                                <p class="text-xs text-blue-700">{{ $payment->notes }}</p>
                             </div>
                             @endif
 
@@ -156,6 +167,54 @@
                     @endif
                 </div>
             </div>
+
+            {{-- Form Catat Pembayaran Offline --}}
+            @if(in_array($booking->status, ['confirmed', 'active']))
+            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-100 bg-green-50">
+                    <h3 class="font-semibold text-green-800">💰 Catat Pembayaran Offline</h3>
+                    <p class="text-xs text-green-600 mt-1">Untuk pelunasan tunai yang dibayar di lokasi kos</p>
+                </div>
+                <div class="p-6">
+                    <form action="{{ route('admin.booking.manual-payment', $booking) }}" method="POST" class="space-y-4">
+                        @csrf
+                        
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                Nominal Pembayaran <span class="text-red-500">*</span>
+                            </label>
+                            <input type="number"
+                                   name="amount"
+                                   value="{{ $booking->total_price - $booking->dp_amount }}"
+                                   required
+                                   min="0"
+                                   step="1"
+                                   class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500 @error('amount') border-red-400 @enderror"
+                                   placeholder="Masukkan nominal">
+                            <p class="text-xs text-gray-400 mt-1">Default: sisa pembayaran (Rp {{ number_format($booking->total_price - $booking->dp_amount, 0, ',', '.') }})</p>
+                            @error('amount') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                Catatan (opsional)
+                            </label>
+                            <textarea name="notes"
+                                      rows="2"
+                                      class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500 resize-none @error('notes') border-red-400 @enderror"
+                                      placeholder="Contoh: Pelunasan tunai saat check-in"></textarea>
+                            @error('notes') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                        </div>
+
+                        <button type="submit"
+                                onclick="return confirm('Yakin ingin mencatat pembayaran offline ini? Booking akan otomatis diselesaikan.')"
+                                class="w-full bg-green-600 hover:bg-green-700 text-white font-bold text-sm py-3 rounded-xl transition">
+                            Simpan Pembayaran Offline
+                        </button>
+                    </form>
+                </div>
+            </div>
+            @endif
         </div>
 
         {{-- Kolom Kanan: Info Pengguna + Aksi --}}

@@ -31,14 +31,6 @@
         </div>
     </div>
 
-    {{-- Akses Cepat --}}
-    <div class="flex flex-wrap gap-3 mb-8">
-        <a href="{{ route('admin.testimonial.index') }}" class="inline-flex items-center gap-2 bg-white border border-gray-100 shadow-sm rounded-full px-5 py-2.5 text-sm font-semibold text-gray-700 hover:border-[#2F4538]/40 hover:text-[#2F4538] transition">
-            <span class="w-4 h-4">{!! \App\Support\Icons::get('chat') !!}</span>
-            Kelola Testimoni Beranda
-        </a>
-    </div>
-
     {{-- Booking Terbaru --}}
     <h2 class="font-semibold text-gray-900 mb-4">Booking Terbaru</h2>
     @if($recentBookings->count())
@@ -184,7 +176,7 @@ $mappedBookings = $recentBookings->keyBy('id')->map(function($booking) use ($sta
             return [
                 'id' => $payment->id,
                 'type' => ['dp' => 'Uang Muka (DP)', 'monthly' => 'Bulanan', 'full' => 'Penuh'][$payment->payment_type] ?? $payment->payment_type,
-                'method' => strtoupper($payment->payment_method),
+                'method' => $payment->payment_method === 'cash' ? 'CASH' : strtoupper($payment->payment_method),
                 'amount' => number_format($payment->amount, 0, ',', '.'),
                 'status' => $payment->status,
                 'statusLabel' => ['pending' => 'Menunggu', 'verified' => 'Terverifikasi', 'rejected' => 'Ditolak'][$payment->status] ?? $payment->status,

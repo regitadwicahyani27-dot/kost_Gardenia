@@ -181,7 +181,6 @@
         </div>
         <div class="flex gap-2 mb-5">
             <button type="button" onclick="pilihTabMetode('qris')" id="tab-qris" class="flex-1 text-xs font-semibold py-2.5 rounded-full bg-[#2F4538] text-white transition">QRIS</button>
-            <button type="button" onclick="pilihTabMetode('ewallet')" id="tab-ewallet" class="flex-1 text-xs font-semibold py-2.5 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition">DANA / OVO</button>
             <button type="button" onclick="pilihTabMetode('bank')" id="tab-bank" class="flex-1 text-xs font-semibold py-2.5 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition">Transfer BCA</button>
         </div>
         <div id="konten-qris" class="text-center">
@@ -195,28 +194,6 @@
                 <span class="text-[10px] font-bold border border-gray-200 rounded px-2 py-1">OVO</span>
                 <span class="text-[10px] font-bold border border-gray-200 rounded px-2 py-1">DANA</span>
                 <span class="text-[10px] font-bold border border-gray-200 rounded px-2 py-1">ShopeePay</span>
-            </div>
-        </div>
-        <div id="konten-ewallet" class="hidden">
-            <div class="space-y-3">
-                <button type="button" onclick="pilihEwallet('dana')" id="opsi-dana" class="w-full flex items-center gap-3 border-2 border-gray-100 rounded-xl px-4 py-3 hover:border-[#2F4538] transition text-left">
-                    <div class="w-10 h-10 rounded-full bg-blue-500 text-white flex items-center justify-center font-bold text-sm">D</div>
-                    <div class="flex-1"><p class="text-sm font-semibold text-gray-900">DANA</p><p class="text-xs text-gray-400">Bayar pakai saldo DANA</p></div>
-                    <svg class="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                </button>
-                <button type="button" onclick="pilihEwallet('ovo')" id="opsi-ovo" class="w-full flex items-center gap-3 border-2 border-gray-100 rounded-xl px-4 py-3 hover:border-[#2F4538] transition text-left">
-                    <div class="w-10 h-10 rounded-full bg-purple-600 text-white flex items-center justify-center font-bold text-sm">O</div>
-                    <div class="flex-1"><p class="text-sm font-semibold text-gray-900">OVO</p><p class="text-xs text-gray-400">Bayar pakai saldo OVO</p></div>
-                    <svg class="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                </button>
-            </div>
-
-            {{-- Nomor E-Wallet --}}
-            <div class="mt-4">
-                <label id="label-ewallet-phone" for="ewallet_phone" class="block text-sm font-semibold text-gray-900 mb-1">Nomor DANA Anda</label>
-                <input type="tel" id="ewallet_phone" name="ewallet_phone" inputmode="numeric" placeholder="08xxxxxxxxxx" maxlength="15"
-                       class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#2F4538]" />
-                <p id="error-ewallet-phone" class="text-xs text-red-500 mt-1 hidden">Nomor e-wallet wajib diisi.</p>
             </div>
         </div>
         <div id="konten-bank" class="hidden">
@@ -236,6 +213,46 @@
                 <p class="text-xs text-gray-400 mt-3">*Pastikan transfer sesuai nominal agar verifikasi lebih cepat.</p>
             </div>
         </div>
+        {{-- Upload Bukti Transfer --}}
+        <div class="mt-5 border-t border-gray-100 pt-5">
+            <label class="block text-sm font-semibold text-gray-900 mb-2">
+                📎 Upload Bukti Transfer <span class="text-red-500">*</span>
+            </label>
+
+            {{-- Zona klik --}}
+            <div id="proof-upload-zone"
+                 onclick="document.getElementById('proof-input').click()"
+                 class="cursor-pointer border-2 border-dashed border-gray-200 rounded-xl p-5 text-center hover:border-[#2F4538] hover:bg-green-50 transition">
+                <div class="flex flex-col items-center gap-2 text-gray-400">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    <p class="text-xs font-medium text-gray-500">Klik untuk pilih foto bukti transfer</p>
+                    <p class="text-[10px] text-gray-400">JPG / PNG · Maks. 2MB</p>
+                </div>
+            </div>
+
+            {{-- Input file (tersembunyi) --}}
+            <input type="file" id="proof-input" accept="image/jpeg,image/jpg,image/png"
+                   class="hidden" onchange="previewProof(this)">
+
+            {{-- Preview gambar --}}
+            <div id="proof-preview" class="hidden mt-3 relative">
+                <img id="proof-img" src="" alt="Preview bukti" class="w-full rounded-xl max-h-44 object-contain border border-gray-100">
+                <button type="button" onclick="hapusProof()"
+                        class="absolute top-2 right-2 w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition shadow">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+                <p class="text-xs text-gray-400 mt-1 text-center" id="proof-filename"></p>
+            </div>
+
+            {{-- Pesan error --}}
+            <p id="error-proof" class="text-xs text-red-500 mt-1.5 hidden">Bukti transfer wajib diupload.</p>
+        </div>
+
         <button type="button" onclick="konfirmasiBayar()" class="w-full bg-[#2F4538] text-white font-bold text-sm py-3.5 rounded-xl hover:bg-[#26392E] transition mt-6">Bayar Sekarang</button>
     </div>
 </div>
@@ -368,16 +385,12 @@
 
     function pilihTabMetode(tab) {
         selectedMetode = tab;
-        ['qris', 'ewallet', 'bank'].forEach(t => {
+        ['qris', 'bank'].forEach(t => {
             document.getElementById('tab-' + t).className = 'flex-1 text-xs font-semibold py-2.5 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition';
             document.getElementById('konten-' + t).classList.add('hidden');
         });
         document.getElementById('tab-' + tab).className = 'flex-1 text-xs font-semibold py-2.5 rounded-full bg-[#2F4538] text-white transition';
         document.getElementById('konten-' + tab).classList.remove('hidden');
-
-        if (tab === 'ewallet') {
-            pilihEwallet('dana');
-        }
     }
 
     function pilihEwallet(ewallet) {
@@ -396,17 +409,16 @@
     }
 
     function konfirmasiBayar() {
-        // Validasi nomor e-wallet jika metode DANA/OVO dipilih
-        if (selectedMetode === 'dana' || selectedMetode === 'ovo') {
-            const phone = document.getElementById('ewallet_phone').value.trim();
-            if (!phone) {
-                document.getElementById('error-ewallet-phone').classList.remove('hidden');
-                document.getElementById('ewallet_phone').focus();
-                return;
-            }
+        // Validasi bukti transfer wajib ada
+        const proofInput = document.getElementById('proof-input');
+        if (!proofInput.files || proofInput.files.length === 0) {
+            document.getElementById('error-proof').classList.remove('hidden');
+            document.getElementById('proof-upload-zone').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
         }
+        document.getElementById('error-proof').classList.add('hidden');
 
-        // Kirim form via AJAX
+        // Kirim form via AJAX (multipart/form-data — jangan set Content-Type manual)
         const form = document.getElementById('form-booking');
         const formData = new FormData(form);
 
@@ -414,10 +426,14 @@
         if (metode === 'bank') metode = 'bca';
         formData.set('payment_method', metode);
 
+        // Append file bukti transfer
+        formData.set('proof', proofInput.files[0]);
+
         fetch(form.action, {
             method: 'POST',
             body: formData,
             headers: {
+                // Content-Type TIDAK diset manual — browser set multipart boundary otomatis
                 'X-Requested-With': 'XMLHttpRequest',
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}'
             }
@@ -425,6 +441,9 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
+                // Reset bukti setelah berhasil
+                hapusProof();
+
                 // Tutup popup bayar
                 tutupPopupBayar();
 
@@ -454,6 +473,37 @@
 
     function cetakBukti() {
         window.print();
+    }
+
+    function previewProof(input) {
+        if (!input.files || !input.files[0]) return;
+        const file = input.files[0];
+
+        // Validasi ukuran di sisi klien (maks 2MB)
+        if (file.size > 2 * 1024 * 1024) {
+            showToast('Ukuran file maksimal 2MB.', 'error');
+            input.value = '';
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('proof-img').src = e.target.result;
+            document.getElementById('proof-filename').textContent = file.name;
+            document.getElementById('proof-preview').classList.remove('hidden');
+            document.getElementById('proof-upload-zone').classList.add('hidden');
+            document.getElementById('error-proof').classList.add('hidden');
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function hapusProof() {
+        const input = document.getElementById('proof-input');
+        input.value = '';
+        document.getElementById('proof-img').src = '';
+        document.getElementById('proof-filename').textContent = '';
+        document.getElementById('proof-preview').classList.add('hidden');
+        document.getElementById('proof-upload-zone').classList.remove('hidden');
     }
 </script>
 @endpush
